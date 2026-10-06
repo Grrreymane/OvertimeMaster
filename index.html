@@ -124,23 +124,26 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .grid26 i .d{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(-45deg,#e08a2c 0 3px,#f3c27b 3px 6px)}
 .folder .lg{font-size:11px;color:var(--manilaInk);margin-top:6px;display:flex;justify-content:space-between;gap:8px}
 .folder .lg b{color:#a85512}
-.lower{display:flex;gap:10px;align-items:stretch}
-.eff{flex:1;min-width:0;background:var(--paper);border-radius:10px;box-shadow:0 2px 0 #0003;padding:8px 10px;display:flex;flex-direction:column;gap:5px}
+/* 这一行和操作区都固定高度：内容变化（有没有便利贴、效率明细几行、工作中/空闲）不能挤动上面的办公室 */
+.lower{display:flex;gap:10px;align-items:stretch;height:112px}
+.eff{flex:1;min-width:0;overflow:hidden;background:var(--paper);border-radius:10px;box-shadow:0 2px 0 #0003;padding:8px 10px;display:flex;flex-direction:column;gap:5px}
 .eff .eh{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--mute)}
 .eff .eh b{font-size:22px;line-height:1}
 .ebar{height:6px;border-radius:9px;background:#e6ddc9;overflow:hidden}
 .ebar i{display:block;height:100%;border-radius:9px}
 .eff ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
-.eff li{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#5f6669;line-height:1.45}
+.eff li{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#5f6669;line-height:1.3}
 .eff li span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .eff li em{font-style:normal;font-weight:700;color:var(--green);white-space:nowrap}
 .eff li em.neg{color:var(--red)}
-.tipnote{position:relative;width:118px;min-height:92px;flex:none;align-self:center;background:linear-gradient(170deg,#fff0a6,#ffe27a 70%,#f2cf5f);padding:16px 11px 10px;
+.eff ul.two{display:grid;grid-template-columns:1fr 1fr;column-gap:8px}
+.eff ul.two li{font-size:10px}
+.tipnote{position:relative;width:118px;flex:none;align-self:stretch;overflow:hidden;background:linear-gradient(170deg,#fff0a6,#ffe27a 70%,#f2cf5f);padding:16px 11px 10px;
   transform:rotate(2deg);color:#4a3d10;box-shadow:2px 6px 8px -2px #0005;clip-path:polygon(0 0,100% 0,100% 84%,88% 100%,0 100%)}
 .tipnote::before{content:"";position:absolute;top:4px;left:50%;width:13px;height:13px;margin-left:-6px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ff8a7a,#c8463a);box-shadow:0 2px 2px #0005}
 .tipnote::after{content:"";position:absolute;right:0;bottom:0;width:12%;height:16%;background:linear-gradient(315deg,transparent 48%,#d8b74e 50%,#f6e08f)}
 .tipnote b{display:block;font-family:var(--hand);font-weight:400;font-size:19px;line-height:1.2}
-.tipnote span{display:block;font-size:11px;opacity:.78;margin-top:4px;line-height:1.35}
+.tipnote span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;opacity:.78;margin-top:4px;line-height:1.35}
 .tipnote.alert{background:linear-gradient(170deg,#ffd6c8,#ffb9a6 70%,#f2a08a);color:#5a1a0e}
 .thermo{grid-column:2;grid-row:1/3;background:var(--paper);border-radius:12px;box-shadow:0 2px 0 #0003;display:flex;flex-direction:column;align-items:center;padding:9px 0 10px;gap:2px}
 .thermo .k{font-size:11px;color:var(--mute)}
@@ -161,7 +164,7 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .dur{position:absolute;left:calc(100% - 122px - 10px - 72px);top:9px;font-size:12px;font-weight:700;background:#ffffffb8;border-radius:99px;padding:4px 10px;color:#1d5a4b;z-index:2}
 .cb.off2{width:122px;height:70px;padding:10px 12px}
 .cb.off2 .ico{font-size:28px} .cb.off2 span{font-size:24px}
-.trio .cb{height:54px}
+.trio .cb,.cb.row2{height:54px}
 .cb.run{flex:1;height:70px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;overflow:hidden;text-align:center}
 .cb.run .fill{position:absolute;inset:0 auto 0 0;background:#2f7d6b2e;transition:width .12s linear}
 .cb.run span,.cb.run small{position:relative}
@@ -185,7 +188,8 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 #app.cmp1 .eff{padding:7px 9px;gap:4px}
 #app.cmp1 .eff .eh b{font-size:19px}
 #app.cmp1 .eff li{font-size:10.5px;line-height:1.35}
-#app.cmp1 .tipnote{width:108px;min-height:80px;padding:14px 9px 8px}
+#app.cmp1 .tipnote{width:108px;padding:14px 9px 8px}
+#app.cmp1 .lower{height:100px}
 #app.cmp1 .tipnote b{font-size:16px}
 #app.cmp1 .tipnote span{font-size:10.5px}
 #app.cmp1 .thermo b{font-size:20px}
@@ -195,16 +199,16 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 #app.cmp1 .cb.off2 span{font-size:20px}
 #app.cmp1 .cb.work .ico{font-size:26px}
 #app.cmp1 .cb.off2 .ico{font-size:24px}
-#app.cmp1 .trio .cb,#app.cmp1 .lockline{height:48px}
+#app.cmp1 .trio .cb,#app.cmp1 .lockline,#app.cmp1 .cb.row2{height:48px}
 #app.cmp1 .trio .cb span{font-size:15px}
 #app.cmp1 .dur{top:7px}
 #app.cmp2 .bosses,#app.cmp2 .eff ul,#app.cmp2 .tipnote span,#app.cmp2 .folder .lg,#app.cmp2 .thermo em{display:none}
 #app.cmp2 .hud{padding-top:6px}
 #app.cmp2 .lcd .ind{display:none}
 #app.cmp2 .lcd svg{height:32px}
-#app.cmp2 .tipnote{min-height:64px}
+#app.cmp2 .lower{height:66px}
 #app.cmp2 .cb.work,#app.cmp2 .cb.off2,#app.cmp2 .cb.run{height:54px}
-#app.cmp2 .trio .cb,#app.cmp2 .lockline{height:44px}
+#app.cmp2 .trio .cb,#app.cmp2 .lockline,#app.cmp2 .cb.row2{height:44px}
 #app.cmp2 .trio .cb small{display:none}
 /* ---------- 纸张类弹层 ---------- */
 .dim{position:absolute;inset:0;background:#0b1a1666;z-index:15;animation:fade .2s}
@@ -594,7 +598,7 @@ function playView(){
     <div class="lower">
       <div class="eff"><div class="eh"><span>产出效率</span><b class="tnum" style="color:${ec}">${tot}%</b></div>
         <div class="ebar"><i style="width:${Math.min(100,tot)}%;background:${ec}"></i></div>
-        <ul>${E.rows.map(r=>`<li><span>${r.t}</span><em class="${r.neg?'neg':''}">${r.v}</em></li>`).join('')}</ul></div>
+        <ul class="${E.rows.length>4?'two':''}">${E.rows.map(r=>`<li><span>${r.t}</span><em class="${r.neg?'neg':''}">${r.v}</em></li>`).join('')}</ul></div>
       ${g?`<div class="tipnote ${g.k==='alert'?'alert':''}">${g.tut?'<i class="tut">新手指引</i>':''}<b>${g.b}</b><span>${g.d}</span></div>`:''}
     </div>
     <div class="thermo"><span class="k">压力</span><b class="tnum" style="color:${col}">${Math.round(s.fatigue)}</b><em style="color:${col}">${lvlWord(s.fatigue)}</em>
@@ -608,7 +612,7 @@ function dockHTML(s,g){
     return `<div class="drow">
       <button class="cb run" data-a="pause"><span class="fill" style="width:${p}%"></span><span>${ui.paused?'继续':game.actionName(j.kind)+'中'}</span><small>${j.title?esc(j.title)+' · ':''}剩${j.left}分钟 · ${ui.paused?'点一下继续':'点一下暂停'}</small></button>
       <button class="cb off2 yellow" data-a="fast">${ic('fast')}<span>快进</span><small>遇事会停</small></button></div>
-      ${cancellable?`<button class="cb wide" data-a="cancel" style="height:54px">${ic('stop')}<span>停下</span><small>已用的时间不退</small></button>`:'<div class="lockline">这件事要做完才能停</div>'}`;
+      ${cancellable?`<button class="cb wide row2" data-a="cancel">${ic('stop')}<span>停下</span><small>已用的时间不退</small></button>`:'<div class="lockline">这件事要做完才能停</div>'}`;
   }
   const c=controls(s),hot=k=>g&&g.k===k?'hot':'',off=why=>why?'off':'',hand=k=>g&&g.tut&&g.k===k?HAND:'';
   const pv=game.preview(ui.dur),risky=s.draft+pv.gain>0&&pv.end+c.subMin>game.shutdownTime();
