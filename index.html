@@ -27,18 +27,17 @@
   color-scheme:light;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;background:#0e1b22;color:var(--paperInk);font-family:var(--sans);overscroll-behavior:none}
+html,body{height:100%;margin:0;background:#0e1b22;color:var(--paperInk);font-family:var(--sans);overscroll-behavior:none;overflow:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{display:flex;justify-content:center;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;font-size:inherit;text-align:inherit}
 button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .tnum{font-variant-numeric:tabular-nums}
 .ico{width:1em;height:1em;flex:none;display:inline-block;vertical-align:-.12em}
-#app{position:relative;width:100%;max-width:440px;height:100%;overflow:hidden;display:flex;flex-direction:column;
+/* 和渔喵传说一样：固定定位贴满可见区域；高度再由脚本按 visualViewport 校正（三星浏览器底部工具栏） */
+#app{position:fixed;left:50%;top:0;transform:translateX(-50%);width:100%;max-width:440px;height:var(--vh,100%);overflow:hidden;display:flex;flex-direction:column;
   background:radial-gradient(120% 80% at 50% 30%,var(--matHi),var(--mat));
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@supports (height:100dvh){#app{height:100dvh}}
-@media (min-width:600px){#app{height:min(100%,900px);margin:auto;border-radius:24px;box-shadow:0 20px 60px #000a}}
-@supports (height:100dvh){@media (min-width:600px){#app{height:min(100dvh,900px)}}}
+@media (min-width:600px){#app{top:50%;transform:translate(-50%,-50%);height:min(var(--vh,100%),900px);border-radius:24px;box-shadow:0 20px 60px #000a}}
 #screen{flex:1;display:flex;flex-direction:column;min-height:0;overflow-y:auto;overflow-x:hidden}
 #screen>*{flex:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -507,7 +506,7 @@ const lvlWord=f=>f<40?'扛得住':f<70?'有点累':'吃不消';
 const parts={};
 function put(id,html){const el=parts[id];if(el&&el._h!==html){el.innerHTML=html;el._h=html}}
 function setScreen(kind,html){
-  if(screen._kind!==kind){screen.innerHTML=html;screen._kind=kind;for(const k in parts)delete parts[k];
+  if(screen._kind!==kind){screen.style.zoom='';screen.innerHTML=html;screen._kind=kind;for(const k in parts)delete parts[k];
     screen.querySelectorAll('[data-part]').forEach(el=>{parts[el.dataset.part]=el;el._h=null});}
 }
 function render(){
@@ -810,7 +809,7 @@ function frame(now){
     while(ui.elapsed>=iv&&game.s.phase==='running'&&n<24){ui.elapsed-=iv;n++;game.step()}
     if(n){flushNotes();if(now-ui.lastSave>1500)persist()}
   }else{ui.elapsed=0;ui.fast=false}
-  if(dirty){dirty=false;try{render()}catch(err){showError(err)}}
+  if(dirty){dirty=false;try{render();fitZoom()}catch(err){showError(err)}}
   const cv=ui.view==='title'?$('heroCv'):$('cv');
   if(cv){
     let row=0,minute=1050;
@@ -825,7 +824,17 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 Object.values(office.imgs).forEach(im=>im.addEventListener('load',()=>{office.ready=(office.ready||0)+1}));
-window.addEventListener('resize',()=>{dirty=true;lastFrameKey=''});
+// 可见高度：visualViewport 最准（扣掉浏览器工具栏和键盘），没有就用 innerHeight
+function setVH(){const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+  document.documentElement.style.setProperty('--vh',Math.round(h)+'px');screen.style.zoom='';dirty=true;lastFrameKey=''}
+window.addEventListener('resize',setVH);
+if(window.visualViewport)window.visualViewport.addEventListener('resize',setVH);
+setVH();
+// 保险：紧凑样式之后还放不下，就把整个画面等比缩小（最多到 72%），按钮一定露出来
+function fitZoom(){
+  const z=parseFloat(screen.style.zoom)||1,over=screen.scrollHeight-screen.clientHeight;
+  if(over>1)screen.style.zoom=Math.max(.72,z*screen.clientHeight/screen.scrollHeight).toFixed(3);
+}
 
 /* ---------------------------------------------------------------- 报错面板 */
 function showError(err){
