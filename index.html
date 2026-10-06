@@ -12,8 +12,8 @@
 <meta property="og:url" content="https://grrreymane.github.io/OvertimeMaster/">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=edca6363") format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=edca6363") format("woff2");font-display:swap}
+@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=fccc305f") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=fccc305f") format("woff2");font-display:swap}
 /* 手写体：站酷快乐体子集（ZCOOL KuaiLe，OFL）。
    风格：工位桌面。墨绿桌垫上摆着台历、考勤机、牛皮纸文件夹、便利贴、便函、工牌；按钮是黏土块。
    字体：黑体管数字和规则；手写体只给“人说的话”（便利贴、领导原话）；时钟是画出来的七段数码管。 */
@@ -429,7 +429,7 @@ function toast(msg,ms){
   while(toastBox.children.length>2)toastBox.firstChild.remove();
   setTimeout(()=>d.remove(),ms||2200);
 }
-const NOTABLE=/损失|抵消|急件|叫住|打扫|人事|停机|禁止|晨会|至少收|还不能下班|领导已更换/;
+const NOTABLE=/午休|损失|抵消|急件|叫住|打扫|人事|停机|禁止|晨会|至少收|还不能下班|领导已更换/;
 function flushNotes(){
   const h=game.s.history||[];
   for(let i=ui.seenNotes;i<h.length;i++) if(NOTABLE.test(h[i].text)&&ui.view==='play') toast(h[i].text.replace(/。$/,''));
