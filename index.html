@@ -74,10 +74,10 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 
 /* ---------- 顶栏：台历 + 考勤机 + 菜单/头像 ---------- */
 .hud{display:flex;align-items:stretch;gap:8px;padding:10px 12px 6px}
-.cal{width:56px;flex:none;background:var(--paper);border-radius:8px;overflow:hidden;text-align:center;box-shadow:0 2px 0 #0003}
-.cal .ch{background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 0 3px}
-.cal .cd{font-size:26px;font-weight:900;line-height:1.2;padding-top:3px}
-.cal .ct{font-size:10px;color:var(--mute);padding-bottom:4px}
+.cal{width:60px;flex:none;background:var(--paper);border-radius:8px;overflow:hidden;text-align:center;box-shadow:0 2px 0 #0003;display:flex;flex-direction:column}
+.cal .ch{background:var(--red);color:#fff;font-size:13px;font-weight:700;padding:4px 0 3px}
+.cal .cd{flex:1;display:grid;place-items:center;font-size:40px;font-weight:900;line-height:1}
+.cal .ct{font-size:11px;color:var(--mute);padding-bottom:5px}
 .punch{flex:1;min-width:0;background:var(--panel);border-radius:10px;padding:6px 8px 4px;display:flex;flex-direction:column;gap:5px;box-shadow:0 2px 0 #0003}
 .lcd{background:#14201b;border-radius:6px;box-shadow:inset 0 2px 6px #000a;padding:3px 8px 6px;display:flex;flex-direction:column;align-items:center}
 .lcd .ind{align-self:stretch;display:flex;justify-content:space-between;font-size:10px;font-weight:700;line-height:14px;letter-spacing:.06em;color:#9ff0b84d}
@@ -93,8 +93,8 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .daybar b{position:absolute;top:-3px;width:2px;height:11px;background:#fff;border-radius:2px}
 .dayrow{position:relative;height:13px;font-size:10px;color:#cfd6d8}
 .dayrow span{position:absolute;transform:translateX(-50%);white-space:nowrap}
-.menu2{width:56px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--paper);border-radius:8px;font-size:12px;font-weight:700;box-shadow:0 2px 0 #0003}
-.menu2 i{font-style:normal;font-size:24px;line-height:1}
+.menu2{width:60px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--paper);border-radius:8px;font-size:14px;font-weight:900;box-shadow:0 2px 0 #0003}
+.menu2 svg{width:30px;height:24px;display:block}
 .bosses{display:flex;align-items:center;gap:8px;margin:2px 12px 0;padding:3px 12px 3px 3px;align-self:flex-start;background:#0003;border-radius:99px;font-size:12px;color:#e8f2ee}
 .bosses span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bosses small{color:#cfe5dc99;font-size:11px}
@@ -216,7 +216,7 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .sheet{background:var(--paper);border-radius:12px;padding:12px 14px;box-shadow:0 3px 0 #0003}
 .mhead{display:flex;gap:12px;align-items:center}
 .mhead .cal{width:66px}
-.mhead .cal .cd{font-size:30px}
+.mhead .cal .cd{font-size:34px;padding:4px 0}
 .mhead h2{font-size:24px}
 .buff{border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 3px 0 #0003}
 .buff.pos{background:#d9f2e8;color:#1e5c4d} .buff.neg{background:#f8ddd2;color:#8a2b20}
@@ -537,7 +537,7 @@ function playView(){
     <div class="punch ${ph.c}"><div class="lcd"><div class="ind"><b>${indL}</b>${indR}</div>${lcdSVG(clock(s.minute).padStart(5,'0'))}</div>
       <div class="daybar"><i style="width:${pct(s.minute)}%"></i><b style="left:${pct(ed)}%"></b></div>
       <div class="dayrow"><span style="left:${Math.min(80,pct(ed))}%">${clock(ed)} 下班</span></div></div>
-    <button class="menu2" data-a="menu"><i>≡</i>菜单</button>`);
+    <button class="menu2" data-a="menu"><svg viewBox="0 0 30 24" aria-hidden="true"><rect y="1" width="30" height="4" rx="2" fill="currentColor"/><rect y="10" width="30" height="4" rx="2" fill="currentColor"/><rect y="19" width="30" height="4" rx="2" fill="currentColor"/></svg>菜单</button>`);
   put('bosses',`<span class="faces">${s.traits.map(id=>`<img src="${pic(id)}" alt="">`).join('')}</span><span>${s.traits.map(id=>esc(game.leaderData(id).name)).join(' · ')}</span><small>›</small>`);
   const run=s.phase==='running'&&s.jobs[0];
   put('sceneUI',run?`<span class="state">${ui.paused?'已暂停':game.actionName(run.kind)+'中…'}</span>`:'');
