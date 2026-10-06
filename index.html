@@ -12,8 +12,8 @@
 <meta property="og:url" content="https://grrreymane.github.io/OvertimeMaster/">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=4b3ced24") format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=4b3ced24") format("woff2");font-display:swap}
+@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=52f8f51e") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=52f8f51e") format("woff2");font-display:swap}
 /* 手写体：站酷快乐体子集（ZCOOL KuaiLe，OFL）。
    风格：工位桌面。墨绿桌垫上摆着台历、考勤机、牛皮纸文件夹、便利贴、便函、工牌；按钮是黏土块。
    字体：黑体管数字和规则；手写体只给“人说的话”（便利贴、领导原话）；时钟是画出来的七段数码管。 */
@@ -494,6 +494,7 @@ function guide(s){
     if(game.submissionBlock()!=='')return{b:'再做一点',d:'果树农民每次至少收30点。',k:'work'};
     return{b:'交一次草稿',d:'攒够了交，交了才算进度。',k:'submit'};
   }
+  if(s.fatigue>=85)return{b:'快撑不住了！',d:'压力满100会病倒，明天请病假。',k:'rest'};
   if(s.fatigue>=40&&endTime(s.minute,30)<=shut)return{b:'歇一会儿吧',d:`休息30分钟，压力−${game.restRecovery()}。`,k:'rest'};
   if(s.minute>=shut-30)return{b:'准备下班',d:'时间不多了。',k:'clock'};
   if(!s.tutorial_worked)return{b:'先干活！',d:'点工作，做出第一份草稿。',k:'work'};
@@ -518,13 +519,14 @@ function controls(s){
   return c;
 }
 const lvlColor=f=>f<40?'#2f9d7f':f<70?'#e8a24a':'#e0573f';
-const lvlWord=f=>f<40?'扛得住':f<70?'有点累':'吃不消';
+const lvlWord=f=>f<40?'扛得住':f<70?'有点累':f<85?'吃不消':'要崩了';
 
 /* ---------------------------------------------------------------- 渲染：分块对比字符串，变了才写 DOM */
 const parts={};
 function put(id,html){const el=parts[id];if(el&&el._h!==html){el.innerHTML=html;el._h=html}}
 function setScreen(kind,html){
-  if(screen._kind!==kind){screen.innerHTML=html;screen._kind=kind;for(const k in parts)delete parts[k];
+  // 换画面会新建 canvas，必须强制重画一次办公室（否则帧参数没变就不画，新画布是空的）
+  if(screen._kind!==kind){screen.innerHTML=html;screen._kind=kind;lastFrameKey='';for(const k in parts)delete parts[k];
     screen.querySelectorAll('[data-part]').forEach(el=>{parts[el.dataset.part]=el;el._h=null});}
 }
 function render(){
@@ -688,6 +690,21 @@ function summaryHTML(s){
     <div class="ln"><span>压力恢复</span><b class="pos">−${Math.round(d.recovered)}</b></div>
     <div class="ln"><span>现在压力</span><b>${Math.round(s.fatigue)}</b></div>
     <button class="cb mint wide" data-a="next"><span>周一见 · 第${s.day+1}天</span></button></div>`;
+  const nextBtn=`<button class="cb mint wide" data-a="next"><span>${L.workday(s.day+1)?'明天见':'过周末'}</span></button>`;
+  if(d.sick)return `<div class="dim"></div><div class="receipt" role="dialog" aria-label="病假">
+    <h3>病假</h3><div class="sub">第${s.day}天 · 在家躺了一整天</div>
+    <div class="ln"><span>今天提交</span><b>0</b></div>
+    <div class="ln"><span>项目累计</span><b>${pti(s.formal)} / 2600</b></div>
+    <div class="ln"><span>现在压力</span><b>${Math.round(s.fatigue)}</b></div>
+    ${nextBtn}</div>`;
+  if(d.collapsed)return `<div class="dim"></div><div class="receipt" role="dialog" aria-label="病倒">
+    <h3>撑不住了</h3><div class="sub">第${s.day}天 · ${clock(d.departure||0)} 被送回家</div>
+    <div class="warn">压力满了，你病倒了。下一个工作日请病假。</div>
+    <div class="ln"><span>今天提交</span><b class="pos">+${pts(d.formal_gain)}</b></div>
+    <div class="ln"><span>没交丢掉</span><b class="${d.lost>0?'neg':''}">${pts(d.lost)}</b></div>
+    <div class="ln"><span>项目累计</span><b>${pti(s.formal)} / 2600</b></div>
+    <div class="ln"><span>养好后压力</span><b>${Math.round(s.fatigue)}</b></div>
+    ${nextBtn}</div>`;
   return `<div class="dim"></div><div class="receipt" role="dialog" aria-label="下班">
     <h3>下班小票</h3><div class="sub">第${s.day}天 · ${clock(d.departure||0)} 打卡</div>
     <div class="ln"><span>今天提交</span><b class="pos">+${pts(d.formal_gain)}</b></div>
@@ -739,7 +756,7 @@ function overlayHTML(){
       <button class="cb mint wide" data-a="close"><span>返回</span></button></div>`;
     case 'ledger':return `<div class="full" role="dialog" aria-label="工作记录"><h2>工作记录</h2><div class="sub">每天提交、加班和下班时间</div>
       <div class="sheet"><table class="ledger"><tr><th>天</th><th>环境</th><th>提交</th><th>丢掉</th><th>加班</th><th>下班</th></tr>
-      ${(s.ledger||[]).map(d=>`<tr><td>${d.day}</td><td>${d.workday?'×'+d.rate:'休'}</td><td>+${pts(d.formal_gain)}</td><td>${d.lost?pts(d.lost):'—'}</td><td>${d.overtime?clock(d.overtime):'—'}</td><td>${d.departure?clock(d.departure):'—'}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--mute)">还没有下过班</td></tr>'}</table></div>
+      ${(s.ledger||[]).map(d=>`<tr><td>${d.day}</td><td>${d.sick?'病假':d.collapsed?'病倒':d.workday?'×'+d.rate:'休'}</td><td>+${pts(d.formal_gain)}</td><td>${d.lost?pts(d.lost):'—'}</td><td>${d.overtime?clock(d.overtime):'—'}</td><td>${d.departure?clock(d.departure):'—'}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--mute)">还没有下过班</td></tr>'}</table></div>
       <button class="cb mint wide" data-a="close" style="margin-top:auto"><span>返回</span></button></div>`;
     case 'help':return `<div class="full" role="dialog" aria-label="怎么过关"><h2>怎么过关</h2>
       <div class="buff pos">${ic('done')}<div><b>30天内，交满2600点</b><span>交满立刻过关，不用等月底</span></div></div>

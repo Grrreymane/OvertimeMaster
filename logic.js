@@ -56,6 +56,7 @@
   const hours = m => idiv(Math.abs(m), 60) + '小时' + String(Math.abs(m) % 60).padStart(2, '0') + '分';
   const endTime = (start, duration) => { let f = start + duration; if (start <= 720 && f > 720) f += 60; return f; };
   const pt = v => (v / 1000).toFixed(1);
+  const SICK_RESET = 30; // 压力满100病倒：当天回家、下一个工作日病假，压力回到这里
 
   function drawLeaders(seed) {
     const r = new GodotRNG(seed), pool = LEADERS.slice(), out = [];
@@ -137,7 +138,8 @@
         week_submit_checked: false, week_stress_checked: false,
         urgent_active: false, urgent_done: false, urgent_goal: 10000, urgent_checked: false, office_called: false,
         event_count: 0, tutorial_worked: false, tutorial_submitted: false, overtime_ban: false, ban_start_day: 1,
-        calendar: {}, triggered_leaders: [], rest_minutes: 0, fatigue_peak: 12.0, record_uses: 0, rests_today: 0
+        calendar: {}, triggered_leaders: [], rest_minutes: 0, fatigue_peak: 12.0, record_uses: 0, rests_today: 0,
+        sick_next: false, sick_days: 0
       };
       G.s.calendar = makeCalendar(seed, G.s.weekly_traits);
       prepareDay();
@@ -240,6 +242,14 @@
       } else { s.rate = 0.0; s.rate_index = 0; }
       s.daily.rate = s.rate;
       if (!workday(s.day)) { settleWeekend(); return; }
+      if (s.sick_next && !s.sealed) {
+        s.sick_next = false; s.rate = 0.0;
+        s.daily.rate = 0.0; s.daily.sick = true; s.daily.departure = 0;
+        s.phase = 'summary'; note('第' + s.day + '日：病假在家，一整天没上班。');
+        recordDay();
+        if (s.day === 30) endRun('项目没赶上DDL');
+        notify(); return;
+      }
       note('第' + s.day + '日：' + (s.sealed ? '项目已完成' : RATE_NAMES[s.rate_index] + ' · 产出×' + s.rate.toFixed(2)));
       notify();
     }
@@ -306,7 +316,7 @@
       } else if (kind === 'wait') {
         s.jobs.push(job('wait', minutes));
       } else return false;
-      activate(); notify(); return true;
+      activate(); checkCollapse(); notify(); return true;
     };
 
     function activate() {
@@ -372,7 +382,7 @@
       if (!['running', 'idle'].includes(s.phase)) return;
       s.jobs = s.jobs.filter(j => j.forced);
       s.phase = 'idle'; note('已取消未完成安排；已用时间不退还。');
-      activate(); notify();
+      activate(); checkCollapse(); notify();
     };
 
     // 推进一个 15 分钟刻
@@ -405,6 +415,7 @@
       checkHr();
       if (s.minute >= G.shutdownTime()) depart(true);
       else checkInterrupts();
+      checkCollapse();
       notify();
     };
 
@@ -542,8 +553,27 @@
       s.event = {}; s.phase = 'idle';
       if (o.minutes > 0) s.jobs.unshift(job(o.kind, o.minutes, { gain_evidence: o.gain }, true, e.title));
       else if (o.gain) s.evidence = Math.min(3, s.evidence + 1);
-      activate(); notify(); return true;
+      activate(); checkCollapse(); notify(); return true;
     };
+
+    // 压力满100：病倒。当天立刻回家（没交的草稿丢掉），下一个工作日病假，压力回到 SICK_RESET
+    function checkCollapse() {
+      const s = S();
+      if (s.fatigue < 100 || s.sealed || !['running', 'idle', 'choice'].includes(s.phase)) return false;
+      if (s.event && s.event.id === 'hr') s.pending.unshift(s.event);
+      s.jobs = s.jobs.filter(j => j.kind === 'hr' && j.left > 0);
+      s.pending = s.pending.filter(e => e.id === 'hr');
+      s.event = {};
+      const lost = s.draft;
+      s.last_lost = lost; s.daily.lost += lost; s.draft = 0; s.focus = false;
+      s.fatigue = SICK_RESET; s.sick_next = true; s.sick_days = (s.sick_days || 0) + 1;
+      s.daily.departure = s.minute; s.daily.collapsed = true; s.daily.sleep = 0;
+      s.phase = 'summary';
+      note('压力满了，你病倒了：今天提前回家，下一个工作日请病假。');
+      recordDay();
+      if (s.day === 30) endRun('项目没赶上DDL');
+      return true;
+    }
 
     function depart(forced) {
       const s = S();
