@@ -33,11 +33,11 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none
 button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .tnum{font-variant-numeric:tabular-nums}
 .ico{width:1em;height:1em;flex:none;display:inline-block;vertical-align:-.12em}
-/* 和渔喵传说一样：固定定位贴满可见区域；高度再由脚本按 visualViewport 校正（三星浏览器底部工具栏） */
-#app{position:fixed;left:50%;top:0;transform:translateX(-50%);width:100%;max-width:440px;height:var(--vh,100%);overflow:hidden;display:flex;flex-direction:column;
+/* 完整布局按 780 高来排，屏幕不够高就整体等比缩小（zoom），宽度不够填满时左右留深色边；位置、尺寸、缩放都由 layoutApp() 算 */
+#app{position:fixed;left:0;top:0;width:100%;max-width:440px;height:100%;overflow:hidden;display:flex;flex-direction:column;
   background:radial-gradient(120% 80% at 50% 30%,var(--matHi),var(--mat));
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (min-width:600px){#app{top:50%;transform:translate(-50%,-50%);height:min(var(--vh,100%),900px);border-radius:24px;box-shadow:0 20px 60px #000a}}
+#app.desk{border-radius:24px;box-shadow:0 20px 60px #000a}
 #screen{flex:1;display:flex;flex-direction:column;min-height:0;overflow-y:auto;overflow-x:hidden}
 #screen>*{flex:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -170,29 +170,42 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 
 
 /* ---------- 矮屏适配（三星等浏览器底部有工具栏，可见高度常在 640—740） ---------- */
-@media (max-height:780px){
-  .hud{padding:8px 10px 4px;gap:6px}
-  .cal .cd{font-size:32px} .lcd svg{height:36px} .lcd .ind{line-height:12px}
-  .bosses{margin-top:0}
-  .scene{min-height:110px}
-  .info{gap:9px 8px;margin:9px 10px 6px}
-  .folder{padding:7px 10px} .folder .big{font-size:21px} .grid26{gap:2px;margin-top:4px} .grid26 i{aspect-ratio:1.6}
-  .folder .lg{margin-top:4px}
-  .eff{padding:7px 9px;gap:4px} .eff .eh b{font-size:19px} .eff li{font-size:10.5px;line-height:1.35}
-  .tipnote{width:108px;min-height:80px;padding:14px 9px 8px} .tipnote b{font-size:16px} .tipnote span{font-size:10.5px}
-  .thermo b{font-size:20px}
-  .dock{padding:2px 10px 10px;gap:8px}
-  .cb.work,.cb.off2,.cb.run{height:60px} .cb.work span{font-size:22px} .cb.off2 span{font-size:20px}
-  .cb.work .ico{font-size:26px} .cb.off2 .ico{font-size:24px}
-  .trio .cb,.lockline{height:48px} .trio .cb span{font-size:15px}
-  .dur{top:7px}
-}
-@media (max-height:690px){
-  .bosses,.eff ul,.tipnote span,.folder .lg,.thermo em{display:none}
-  .hud{padding-top:6px} .lcd .ind{display:none} .lcd svg{height:32px}
-  .tipnote{min-height:64px}
-  .cb.work,.cb.off2,.cb.run{height:54px} .trio .cb,.lockline{height:44px} .trio .cb small{display:none}
-}
+#app.cmp1 .hud{padding:8px 10px 4px;gap:6px}
+#app.cmp1 .cal .cd{font-size:32px}
+#app.cmp1 .lcd svg{height:36px}
+#app.cmp1 .lcd .ind{line-height:12px}
+#app.cmp1 .bosses{margin-top:0}
+#app.cmp1 .scene{min-height:110px}
+#app.cmp1 .info{gap:9px 8px;margin:9px 10px 6px}
+#app.cmp1 .folder{padding:7px 10px}
+#app.cmp1 .folder .big{font-size:21px}
+#app.cmp1 .grid26{gap:2px;margin-top:4px}
+#app.cmp1 .grid26 i{aspect-ratio:1.6}
+#app.cmp1 .folder .lg{margin-top:4px}
+#app.cmp1 .eff{padding:7px 9px;gap:4px}
+#app.cmp1 .eff .eh b{font-size:19px}
+#app.cmp1 .eff li{font-size:10.5px;line-height:1.35}
+#app.cmp1 .tipnote{width:108px;min-height:80px;padding:14px 9px 8px}
+#app.cmp1 .tipnote b{font-size:16px}
+#app.cmp1 .tipnote span{font-size:10.5px}
+#app.cmp1 .thermo b{font-size:20px}
+#app.cmp1 .dock{padding:2px 10px 10px;gap:8px}
+#app.cmp1 .cb.work,#app.cmp1 .cb.off2,#app.cmp1 .cb.run{height:60px}
+#app.cmp1 .cb.work span{font-size:22px}
+#app.cmp1 .cb.off2 span{font-size:20px}
+#app.cmp1 .cb.work .ico{font-size:26px}
+#app.cmp1 .cb.off2 .ico{font-size:24px}
+#app.cmp1 .trio .cb,#app.cmp1 .lockline{height:48px}
+#app.cmp1 .trio .cb span{font-size:15px}
+#app.cmp1 .dur{top:7px}
+#app.cmp2 .bosses,#app.cmp2 .eff ul,#app.cmp2 .tipnote span,#app.cmp2 .folder .lg,#app.cmp2 .thermo em{display:none}
+#app.cmp2 .hud{padding-top:6px}
+#app.cmp2 .lcd .ind{display:none}
+#app.cmp2 .lcd svg{height:32px}
+#app.cmp2 .tipnote{min-height:64px}
+#app.cmp2 .cb.work,#app.cmp2 .cb.off2,#app.cmp2 .cb.run{height:54px}
+#app.cmp2 .trio .cb,#app.cmp2 .lockline{height:44px}
+#app.cmp2 .trio .cb small{display:none}
 /* ---------- 纸张类弹层 ---------- */
 .dim{position:absolute;inset:0;background:#0b1a1666;z-index:15;animation:fade .2s}
 @keyframes fade{from{opacity:0}}
@@ -506,7 +519,7 @@ const lvlWord=f=>f<40?'扛得住':f<70?'有点累':'吃不消';
 const parts={};
 function put(id,html){const el=parts[id];if(el&&el._h!==html){el.innerHTML=html;el._h=html}}
 function setScreen(kind,html){
-  if(screen._kind!==kind){screen.style.zoom='';screen.innerHTML=html;screen._kind=kind;for(const k in parts)delete parts[k];
+  if(screen._kind!==kind){screen.innerHTML=html;screen._kind=kind;for(const k in parts)delete parts[k];
     screen.querySelectorAll('[data-part]').forEach(el=>{parts[el.dataset.part]=el;el._h=null});}
 }
 function render(){
@@ -809,7 +822,7 @@ function frame(now){
     while(ui.elapsed>=iv&&game.s.phase==='running'&&n<24){ui.elapsed-=iv;n++;game.step()}
     if(n){flushNotes();if(now-ui.lastSave>1500)persist()}
   }else{ui.elapsed=0;ui.fast=false}
-  if(dirty){dirty=false;try{render();fitZoom()}catch(err){showError(err)}}
+  if(dirty){dirty=false;try{render()}catch(err){showError(err)}}
   const cv=ui.view==='title'?$('heroCv'):$('cv');
   if(cv){
     let row=0,minute=1050;
@@ -824,17 +837,23 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 Object.values(office.imgs).forEach(im=>im.addEventListener('load',()=>{office.ready=(office.ready||0)+1}));
-// 可见高度：visualViewport 最准（扣掉浏览器工具栏和键盘），没有就用 innerHeight
-function setVH(){const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
-  document.documentElement.style.setProperty('--vh',Math.round(h)+'px');screen.style.zoom='';dirty=true;lastFrameKey=''}
-window.addEventListener('resize',setVH);
-if(window.visualViewport)window.visualViewport.addEventListener('resize',setVH);
-setVH();
-// 保险：紧凑样式之后还放不下，就把整个画面等比缩小（最多到 72%），按钮一定露出来
-function fitZoom(){
-  const z=parseFloat(screen.style.zoom)||1,over=screen.scrollHeight-screen.clientHeight;
-  if(over>1)screen.style.zoom=Math.max(.72,z*screen.clientHeight/screen.scrollHeight).toFixed(3);
+// 布局：完整版按 780 高排。屏幕不够高就整体等比缩小（最小 0.8），缩小后宽度填不满就左右留边；
+// 缩到 0.8 还放不下，才启用紧凑样式（cmp1 / cmp2，按缩放后的逻辑高度判断）。
+const app=$('app'),FULL_H=780,MIN_S=.8;
+function layoutApp(){
+  const vv=window.visualViewport,vw=(vv&&vv.width)||window.innerWidth,vh=(vv&&vv.height)||window.innerHeight;
+  const desk=vw>=600,availH=desk?Math.min(vh-24,900):vh;
+  const s=Math.max(MIN_S,Math.min(1,availH/FULL_H)),Lh=availH/s,Lw=Math.min(440,vw/s);
+  app.style.zoom=s===1?'':s.toFixed(4);
+  app.style.width=Lw+'px';app.style.height=Lh+'px';
+  // zoom 元素自己的 left/top 也会被缩放，所以除以 s
+  app.style.left=((vw-Lw*s)/2/s)+'px';app.style.top=(desk?(vh-Lh*s)/2/s:0)+'px';
+  app.classList.toggle('desk',desk);app.classList.toggle('cmp1',Lh<FULL_H-1);app.classList.toggle('cmp2',Lh<690);
+  dirty=true;lastFrameKey='';
 }
+window.addEventListener('resize',layoutApp);
+if(window.visualViewport)window.visualViewport.addEventListener('resize',layoutApp);
+layoutApp();
 
 /* ---------------------------------------------------------------- 报错面板 */
 function showError(err){
