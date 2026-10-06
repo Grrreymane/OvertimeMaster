@@ -12,8 +12,8 @@
 <meta property="og:url" content="https://grrreymane.github.io/OvertimeMaster/">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=ee435142") format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=ee435142") format("woff2");font-display:swap}
+@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=982f3505") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=982f3505") format("woff2");font-display:swap}
 /* 手写体：站酷快乐体子集（ZCOOL KuaiLe，OFL）。
    风格：工位桌面。墨绿桌垫上摆着台历、考勤机、牛皮纸文件夹、便利贴、便函、工牌；按钮是黏土块。
    字体：黑体管数字和规则；手写体只给“人说的话”（便利贴、领导原话）；时钟是画出来的七段数码管。 */
@@ -211,6 +211,45 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 #app.cmp2 .cb.work,#app.cmp2 .cb.off2,#app.cmp2 .cb.run{height:54px}
 #app.cmp2 .trio .cb,#app.cmp2 .lockline,#app.cmp2 .cb.row2{height:44px}
 #app.cmp2 .trio .cb small{display:none}
+/* ---------- 日历 ---------- */
+.cal{cursor:pointer}
+.cal .ct{white-space:nowrap;letter-spacing:-.3px}
+.calsheet{background:var(--paper);border-radius:12px;padding:10px 8px;box-shadow:0 3px 0 #0003}
+.calhd{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--mute);padding-bottom:4px}
+.calweek{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mute);margin:8px 2px 4px}
+.calweek img{width:22px;height:22px;border-radius:50%;object-fit:cover;object-position:50% 12%;background:#c3d1c6;margin-right:-6px;border:1.5px solid var(--paper)}
+.calweek .q{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#2d34371a;margin-right:-6px;font-weight:700;color:#9aa0a2}
+.calweek span{margin-left:8px}
+.calrow{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cday{height:46px;border-radius:7px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;font-weight:900;line-height:1.1;position:relative}
+.cday small{font-size:10px;font-weight:700}
+.cday.off{background:#2d34370f;color:#9aa0a2}
+.cday.past{background:#e6f6ef} .cday.past small{color:var(--green)}
+.cday.sick{background:#f8ddd2} .cday.sick small{color:var(--red)}
+.cday.today{outline:3px solid var(--red);outline-offset:-1px}
+.cday.none{background:transparent}
+.calleft{display:flex;gap:10px;align-items:center}
+.calleft b{font-size:34px;color:var(--red);font-weight:900;line-height:1}
+/* ---------- 结局与分享 ---------- */
+.honor{display:inline-block;font-family:var(--hand);font-weight:400;font-size:40px;line-height:1.15;color:var(--red);border:3px solid var(--red);border-radius:10px;padding:2px 14px 4px;transform:rotate(-2deg);margin:4px 0 6px}
+.hl{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.hl div{display:flex;gap:8px;align-items:baseline;font-size:14px}
+.hl b{font-size:17px}
+.met{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 8px}
+.met img{width:34px;height:34px;border-radius:50%;object-fit:cover;object-position:50% 12%;background:#c3d1c6;border:2px solid #fff}
+.met img.hard{border-color:var(--red)}
+.worst{display:flex;gap:10px;align-items:center;margin-top:6px}
+.worst img{width:52px;height:58px;border-radius:8px;object-fit:cover;object-position:50% 10%;background:#c3d1c6;flex:none}
+.worst div{background:#fff;border-radius:12px;padding:8px 12px;font-family:var(--hand);font-size:17px;line-height:1.35;box-shadow:0 2px 0 #0002}
+.worst small{display:block;font-family:var(--sans);font-size:11px;color:var(--mute)}
+.cb.share{--c:#7fb6f0;--e:#3a6fa8;--t:#0f2b4a}
+.sharebox{position:absolute;inset:0;z-index:60;background:#060c10f2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;animation:fade .2s}
+.shareimg{max-width:100%;max-height:72%;border-radius:8px;box-shadow:0 10px 30px #000a;-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto}
+.sharebox .tip{color:#cfe5dc;font-size:13px}
+.sharebox .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.sharebox .row .cb{height:48px;padding:0 18px}
+.sharebox a{text-decoration:none}
+
 /* ---------- 纸张类弹层 ---------- */
 .dim{position:absolute;inset:0;background:#0b1a1666;z-index:15;animation:fade .2s}
 @keyframes fade{from{opacity:0}}
@@ -342,7 +381,7 @@ table.ledger{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
 (function(){
 'use strict';
 const L=OvertimeLogic, RULES=window.OVERTIME_RULES, game=L.createGame(RULES);
-const SAVE_KEY='overtime.mobile.v1', PLAYBACK=4, VERSION='网页版 0.16.1';
+const SAVE_KEY='overtime.mobile.v1', PLAYBACK=4, VERSION='网页版 0.17';
 const $=id=>document.getElementById(id);
 const screen=$('screen'), layer=$('layer'), toastBox=$('toast');
 
@@ -525,6 +564,37 @@ function controls(s){
   c.subMin=sub; c.waived=game.submissionWaiver(ui.useEv);
   return c;
 }
+// 还剩几个工作日（今天没下班也算一天）
+function workdaysLeft(s){
+  let n=0;for(let d=s.day+1;d<=30;d++)if(L.workday(d))n++;
+  if(L.workday(s.day)&&!['summary','ending'].includes(s.phase))n++;
+  return n;
+}
+// 这个月已经见过的领导（到当前这周为止，按出场顺序）
+function metLeaders(s){
+  const ids=[],weeks=Math.min(5,L.weekNumber(s.day));
+  for(let w=1;w<=weeks;w++)for(const id of (s.weekly_traits[w]||[]))if(!ids.includes(id))ids.push(id);
+  return ids;
+}
+// 见过的最烦领导（HARD_LEADERS 按烦度排序，文盲最烦）；没有就取第一个
+function worstMet(s){const met=metLeaders(s);return L.HARD_LEADERS.find(id=>met.includes(id))||met[0]}
+// 本月称号
+function honor(s){
+  const won=s.formal>=L.TOTAL,h=s.month/60,sick=s.sick_days||0;
+  if(won){
+    if(h<8)return['准点下班之神','几乎没加班，就把项目交了。'];
+    if(s.day<=22)return['效率怪物',`提前${30-s.day}天交付，领导都没反应过来。`];
+    if(sick>0)return['带病坚持',`病倒${sick}次，项目还是交了。`];
+    if(s.hr_count>0)return['HR的老熟人','被约谈过，项目一点没耽误。'];
+    if(h>=40)return['卷王',`加班${h.toFixed(0)}小时，硬是卷完了。`];
+    return['打工战士','领导催，同事坑，你还是扛住了。'];
+  }
+  const pt=s.formal/1000;
+  if(pt>=2400)return['就差一口气',`只差${Math.ceil(2600-pt)}点。`];
+  if(sick>=2)return['身体要紧',`病倒${sick}次，先照顾好自己。`];
+  if(h>=40)return['卷到最后一刻',`加班${h.toFixed(0)}小时，还是没赶上。`];
+  return['下个月再战','领导们还会再来的。'];
+}
 const lvlColor=f=>f<40?'#2f9d7f':f<70?'#e8a24a':'#e0573f';
 const lvlWord=f=>f<40?'扛得住':f<70?'有点累':f<85?'吃不消':'要崩了';
 
@@ -586,7 +656,7 @@ function playView(){
   const ph=phaseOf(s),shut=game.shutdownTime(),pct=m=>Math.max(0,Math.min(100,(m-540)/(shut-540)*100)),ed=game.earliestDeparture();
   const warnOT=!game.overtimeBlocked()&&s.month>=1800;
   const indL=ph.tag||'上班中',indR=warnOT?`<b class="warn">本月 ${(s.month/60).toFixed(1)}/45h</b>`:'<span>考勤</span>';
-  put('hud',`<div class="cal"><div class="ch">${L.WEEKDAYS[(s.day-1)%7]}</div><div class="cd">${s.day}</div><div class="ct">/ 30 天</div></div>
+  put('hud',`<button class="cal" data-a="calendar" aria-label="本月日历"><div class="ch">${L.WEEKDAYS[(s.day-1)%7]}</div><div class="cd">${s.day}</div><div class="ct">剩${workdaysLeft(s)}工作日</div></button>
     <div class="punch ${ph.c}"><div class="lcd"><div class="ind"><b>${indL}</b>${indR}</div>${lcdSVG(clock(s.minute).padStart(5,'0'))}</div>
       <div class="daybar"><i style="width:${pct(s.minute)}%"></i><b style="left:${pct(ed)}%"></b></div>
       <div class="dayrow"><span style="left:${Math.min(80,pct(ed))}%">${clock(ed)} 下班</span></div></div>
@@ -660,7 +730,7 @@ function morningHTML(s){
     (game.overtimeBlocked()?`<div class="red">${ic('alert')}<span><b>18:00 强制下班</b>HR 已禁止加班，记得提前提交</span></div>`
       :`<div>${ic('clock')}<span><b>19:00 起可以下班</b>没交的草稿，下班就会丢</span></div>`);
   return `<div class="full" role="dialog" aria-label="晨间简报">
-    <div class="mhead"><div class="cal"><div class="ch">${L.WEEKDAYS[(s.day-1)%7]}</div><div class="cd">${s.day}</div><div class="ct">/ 30 天</div></div>
+    <div class="mhead"><div class="cal"><div class="ch">${L.WEEKDAYS[(s.day-1)%7]}</div><div class="cd">${s.day}</div><div class="ct">剩${workdaysLeft(s)}工作日</div></div>
       <div><h2>早上好</h2><div class="sub" style="margin-top:2px">项目 ${pti(s.formal)} / 2600 · 还剩 ${30-s.day} 天</div></div></div>
     <div class="buff ${pos?'pos':'neg'}">${ic(pos?'up':'down')}<div><span>今天 · ${L.RATE_NAMES[s.rate_index]}</span>
       <b>产出${pos?'+':'−'}${Math.abs(ch)}%</b><span>${ment?'忙碌压力+2/时 · 下班结束':'只管今天 · 仍可能遇到事件'}</span></div></div>
@@ -724,20 +794,85 @@ function summaryHTML(s){
     <button class="cb mint wide" data-a="next"><span>${L.workday(s.day+1)?'明天见':'过周末'}</span></button></div>`;
 }
 function endingView(){
-  const s=game.s,won=s.formal>=L.TOTAL;
+  const s=game.s,won=s.formal>=L.TOTAL,[ht,hd]=honor(s),met=metLeaders(s),w=worstMet(s),wd=w&&game.leaderData(w);
+  const row=(k,v)=>`<div class="ln" style="display:flex;justify-content:space-between;border-top:1px dashed #2d343733;padding:5px 0"><span>${k}</span><b>${v}</b></div>`;
   setScreen('end'+s.seed+s.ending,`<div class="full ending" style="position:relative;flex:1 1 auto">
     <div class="cert"><span class="stamp">${won?'已交付':'逾期'}</span>
-      <h2 class="${won?'win':''}">${esc(s.ending)}</h2>
-      <p>${won?'领导还想再改一下，但你的项目已经交了。这个月，你赢了。':'日历翻完了，项目还差一点。换个安排，再和这群办公室奇人过过招。'}</p>
-      <div class="ln" style="display:flex;justify-content:space-between;border-top:1px dashed #2d343733;padding:6px 0"><span>已提交</span><b>${pti(s.formal)} / 2600</b></div>
-      <div class="ln" style="display:flex;justify-content:space-between;border-top:1px dashed #2d343733;padding:6px 0"><span>用时</span><b>${s.day} 天</b></div>
-      <div class="ln" style="display:flex;justify-content:space-between;border-top:1px dashed #2d343733;padding:6px 0"><span>本月加班</span><b>${(s.month/60).toFixed(1)} 小时</b></div>
-      <div class="ln" style="display:flex;justify-content:space-between;border-top:1px dashed #2d343733;padding:6px 0"><span>HR 约谈</span><b>${s.hr_count} 次</b></div>
-      <div style="font-size:11px;color:var(--mute);margin-top:6px">复盘编号 ${s.seed}</div></div>
+      <div style="font-size:12px;color:var(--mute)">${esc(s.ending)} · 本月称号</div>
+      <div class="honor">${ht}</div>
+      <p style="margin:4px 0 6px">${hd}</p>
+      ${row('已提交',`${pti(s.formal)} / 2600`)}
+      ${row(won?'交付日':'用时',won?`第 ${s.day} 天${30-s.day>0?` · 提前 ${30-s.day} 天`:''}`:`${s.day} 天`)}
+      ${row('本月加班',`${(s.month/60).toFixed(1)} 小时`)}
+      ${row('HR 约谈 · 病倒',`${s.hr_count} 次 · ${s.sick_days||0} 次`)}
+      ${row('用掉聊天记录',`${s.record_uses||0} 份`)}
+      <div style="font-size:12px;color:var(--mute);margin-top:8px">扛过的领导 ${met.length} 位</div>
+      <div class="met">${met.map(id=>`<img class="${L.HARD_LEADERS.includes(id)?'hard':''}" src="${pic(id)}" alt="">`).join('')}</div>
+      ${wd?`<div class="worst"><img src="${pic(w)}" alt=""><div>“${esc(wd.quote)}”<small>—— ${esc(wd.name)}，本月最烦</small></div></div>`:''}
+      <div style="font-size:11px;color:var(--mute);margin-top:8px">复盘编号 ${s.seed}</div></div>
     <div class="list" style="margin-top:auto">
+      <button class="cb share wide" data-a="share"><span>分享战绩</span></button>
       <button class="cb mint wide" data-a="new"><span>再来一个月 · 换三位领导</span></button>
       <div class="trio" style="grid-template-columns:repeat(3,1fr)"><button class="cb wide" data-a="same"><span>重试</span></button><button class="cb wide" data-a="ledger"><span>记录</span></button><button class="cb wide" data-a="title"><span>标题</span></button></div>
     </div></div>`);
+}
+
+/* ---------------------------------------------------------------- 分享卡：720×1280 竖版图片，带二维码 */
+const SHARE_URL='https://grrreymane.github.io/OvertimeMaster/';
+const QR=['111111101101100100010001001111111', '100000100100011111001101101000001', '101110101100111001100001001011101', '101110101111011111000111001011101', '101110100000000010111101001011101', '100000101001111100110100101000001', '111111101010101010101010101111111', '000000001000111011011101100000000', '010101111100011110010100111101101', '011011011011101110001000111100011', '101100110100111111010010101110111', '101001000101010001000111010011010', '001110100010010110001100111101001', '101110011000100111010010101010111', '010100101001101101100001011101010', '110000001110111111000111001010010', '110000111011110111111111001010010', '101010000101010010100101110101010', '010101100101010001001010111000111', '111100000111011100111100010100010', '011011111110000111111101110010010', '011110000111101010001110101001111', '110111100010010110010000101111101', '011010011011010111010110100011011', '101011100111010000101100111110010', '000000001010011011010110100011011', '111111101001001001001110101011110', '100000101110101010111110100010010', '101110100001100100111110111111010', '101110101100011101100010101011110', '101110100101001001001100110011001', '100000101111111010001110100001000', '111111100100001011000100101011010'];   // python D:/Minigame/_workflow/tools/qr_matrix.py <网址> 重新生成
+const loadImg=src=>new Promise(r=>{const im=new Image();im.onload=()=>r(im);im.onerror=()=>r(null);im.src=src});
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function wrapText(c,text,x,y,maxW,lh){let line='',yy=y;for(const ch of text){if(c.measureText(line+ch).width>maxW&&line){c.fillText(line,x,yy);line='';yy+=lh}line+=ch}c.fillText(line,x,yy);return yy}
+async function makeShare(){
+  const s=game.s,won=s.formal>=L.TOTAL,[ht,hd]=honor(s),met=metLeaders(s),w=worstMet(s);
+  try{await document.fonts.ready}catch(e){}
+  const W=720,H=1280,cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');
+  const HAND='"Hand Game","Noto SC Game",sans-serif',SANS='"Noto SC Game","PingFang SC","Microsoft YaHei",sans-serif';
+  const imgs=await Promise.all([loadImg('img/office_night.webp?v='+ASSET_V),...met.map(id=>loadImg(pic(id)))]);
+  const office=imgs[0],faces=imgs.slice(1);
+  // 桌垫
+  const g=c.createRadialGradient(W/2,H*.35,50,W/2,H*.4,H*.8);g.addColorStop(0,'#33645a');g.addColorStop(1,'#1f3f38');c.fillStyle=g;c.fillRect(0,0,W,H);
+  // 标题
+  c.textAlign='center';c.fillStyle='#f6efdf';c.font=`86px ${HAND}`;c.fillText('今天也加班',W/2,112);
+  c.font=`700 20px ${SANS}`;c.fillStyle='#cfe5dcb0';c.fillText('O V E R T I M E    M A S T E R',W/2,150);
+  // 办公室（夜景第一帧，裁到内容）
+  if(office){c.imageSmoothingQuality='high';c.drawImage(office,960*.06,600*.05,960*.88,600*.88,160,166,400,240)}
+  // 结算单：从上往下排，高度按内容算
+  const CX=40,CY=420,CW=640;let y=CY+64;
+  const rows=Math.ceil(met.length/10),bottom=CY+500+rows*56+(w?96:0);
+  rr(c,CX,CY,CW,bottom-CY,22);c.fillStyle='#f6efdf';c.fill();
+  c.save();c.translate(570,CY+58);c.rotate(-.14);c.strokeStyle='#c8463a';c.lineWidth=5;rr(c,-78,-32,156,60,12);c.stroke();
+  c.fillStyle='#c8463a';c.font=`42px ${HAND}`;c.textAlign='center';c.fillText(won?'已交付':'逾期',0,14);c.restore();
+  c.textAlign='left';c.fillStyle='#7a7f80';c.font=`24px ${SANS}`;c.fillText(`${s.ending} · 本月称号`,80,y);
+  c.fillStyle='#c8463a';c.font=`70px ${HAND}`;c.fillText(ht,80,y+82);
+  c.fillStyle='#4b5356';c.font=`26px ${SANS}`;y=wrapText(c,hd,80,y+128,560,36)+24;
+  const stats=[['已提交',`${pti(s.formal)} / 2600`],[won?'交付日':'用时',won?`第${s.day}天`:`${s.day}天`],['本月加班',`${(s.month/60).toFixed(1)}h`],['HR约谈·病倒',`${s.hr_count} · ${s.sick_days||0}`]];
+  stats.forEach(([k,v],i)=>{const x=80+(i%2)*290,yy=y+Math.floor(i/2)*90;rr(c,x-8,yy,276,78,12);c.fillStyle='#2d343710';c.fill();
+    c.fillStyle='#7a7f80';c.font=`22px ${SANS}`;c.fillText(k,x+8,yy+30);c.fillStyle='#2d3437';c.font=`900 34px ${SANS}`;c.fillText(v,x+8,yy+68)});
+  y+=196;c.fillStyle='#7a7f80';c.font=`22px ${SANS}`;c.fillText(`扛过的领导 ${met.length} 位`,80,y);y+=16;
+  faces.forEach((im,i)=>{const r=24,x=80+r+(i%10)*56,yy=y+r+Math.floor(i/10)*56;c.save();c.beginPath();c.arc(x,yy,r,0,7);c.fillStyle='#c3d1c6';c.fill();c.clip();
+    if(im)c.drawImage(im,0,im.height*.04,im.width,im.width,x-r,yy-r,r*2,r*2);c.restore();
+    c.beginPath();c.arc(x,yy,r,0,7);c.lineWidth=4;c.strokeStyle=L.HARD_LEADERS.includes(met[i])?'#c8463a':'#fff';c.stroke()});
+  y+=rows*56+18;
+  // 最烦领导的名言
+  if(w){const d=game.leaderData(w),im=faces[met.indexOf(w)];
+    if(im){c.save();rr(c,80,y,68,76,12);c.clip();c.drawImage(im,0,im.height*.03,im.width,im.width*1.13,80,y,68,76);c.restore()}
+    c.font=`28px ${HAND}`;const q='“'+d.quote+'”',tw=Math.min(470,c.measureText(q).width),lines=c.measureText(q).width>470?2:1;
+    rr(c,162,y,tw+36,lines>1?84:52,16);c.fillStyle='#fff';c.fill();c.fillStyle='#2d3437';wrapText(c,q,180,y+36,470,34);
+    c.fillStyle='#7a7f80';c.font=`20px ${SANS}`;c.fillText(`—— ${d.name}，本月最烦`,180,y+(lines>1?112:80))}
+  // 二维码 + 网址（固定在底部）
+  const cell=3,qs=QR.length*cell,qx=60,qy=H-qs-40;c.fillStyle='#fff';c.fillRect(qx-10,qy-10,qs+20,qs+20);c.fillStyle='#1f2a2e';
+  QR.forEach((row,yy)=>{for(let x=0;x<row.length;x++)if(row[x]==='1')c.fillRect(qx+x*cell,qy+yy*cell,cell,cell)});
+  c.textAlign='left';c.fillStyle='#f6efdf';c.font=`36px ${HAND}`;c.fillText('扫码，一起来加班',qx+qs+40,qy+52);
+  c.fillStyle='#9fe8d0';c.font=`22px ${SANS}`;c.fillText(SHARE_URL.replace(/^https?:\/\//,'').replace(/\/$/,''),qx+qs+40,qy+88);
+  return cv;
+}
+async function openShare(){
+  toast('正在生成战绩卡…',1200);
+  const cv=await makeShare(),url=cv.toDataURL('image/png');
+  ui.share={url,file:null};
+  try{cv.toBlob(b=>{if(!b||!navigator.canShare)return;const f=new File([b],'今天也加班-战绩.png',{type:'image/png'});if(navigator.canShare({files:[f]})){ui.share.file=f;dirty=true}})}catch(e){}
+  ui.overlay='share';dirty=true;
 }
 
 /* ---------- 菜单类弹层 ---------- */
@@ -761,6 +896,33 @@ function overlayHTML(){
     case 'catalog':return `<div class="full" role="dialog" aria-label="全部领导"><h2>全部 18 位领导</h2><div class="sub">每周随机三位同时生效 · 标“最烦”的每周最多来一位</div>
       <div class="catalog">${L.LEADERS.map(id=>{const d=game.leaderData(id);return `<div class="mini"><div class="pic"><img src="${pic(id)}" alt="" loading="lazy"></div><b>${esc(d.name)}${L.HARD_LEADERS.includes(id)?'<i class="hardtag">最烦</i>':''}</b><q>${esc(d.quote)}</q><span>${esc(d.summary)}</span></div>`}).join('')}</div>
       <button class="cb mint wide" data-a="close"><span>返回</span></button></div>`;
+    case 'calendar':{
+      const by={};(s.ledger||[]).forEach(d=>{if(d.day)by[d.day]=d});
+      const done=d=>d<s.day||(d===s.day&&['summary','ending'].includes(s.phase));
+      let h='';
+      for(let w=1;w<=5;w++){
+        const start=1+(w-1)*7,shown=w<=L.weekNumber(s.day);
+        h+=`<div class="calweek">${shown?(s.weekly_traits[w]||[]).map(id=>`<img src="${pic(id)}" alt="">`).join(''):'<i class="q">?</i><i class="q">?</i><i class="q">?</i>'}<span>第${w}周${shown?' · '+(s.weekly_traits[w]||[]).map(id=>esc(game.leaderData(id).name)).join('、'):''}</span></div><div class="calrow">`;
+        for(let k=0;k<7;k++){const d=start+k;
+          if(d>30){h+='<div class="cday none"></div>';continue}
+          const e=by[d],wd=L.workday(d),cls=[];let sub='';
+          if(!wd){cls.push('off');sub='休'}
+          else if(e&&e.sick){cls.push('sick');sub='病'}
+          else if(done(d)&&e){cls.push('past');sub=e.formal_gain?'+'+pti(e.formal_gain):'+0'}
+          if(d===s.day&&!done(d))cls.push('today'),sub=sub||'今天';
+          h+=`<div class="cday ${cls.join(' ')}">${d}<small>${sub}</small></div>`}
+        h+='</div>';
+      }
+      return `<div class="full" role="dialog" aria-label="本月日历"><h2>本月日历</h2>
+        <div class="calleft"><span style="color:#cfe5de;font-size:15px">还剩</span><b>${workdaysLeft(s)}</b><span style="color:#cfe5de;font-size:13px">个工作日<br>项目 ${pti(s.formal)} / 2600 · 还差 ${Math.max(0,Math.ceil((L.TOTAL-s.formal)/1000))} 点</span></div>
+        <div class="calsheet"><div class="calhd">${L.WEEKDAYS.map(x=>`<span>${x.slice(1)}</span>`).join('')}</div>${h}</div>
+        <button class="cb mint wide" data-a="close" style="margin-top:auto"><span>回去干活</span></button></div>`;
+    }
+    case 'share':return ui.share?`<div class="sharebox" role="dialog" aria-label="分享战绩"><img class="shareimg" src="${ui.share.url}" alt="战绩卡">
+      <div class="tip">手机上可以长按图片保存</div>
+      <div class="row"><a class="cb mint wide" href="${ui.share.url}" download="今天也加班-战绩.png"><span>保存图片</span></a>
+      ${ui.share.file?'<button class="cb share wide" data-a="shareSys"><span>分享给朋友</span></button>':''}
+      <button class="cb wide" data-a="close"><span>关闭</span></button></div></div>`:'';
     case 'ledger':return `<div class="full" role="dialog" aria-label="工作记录"><h2>工作记录</h2><div class="sub">每天提交、加班和下班时间</div>
       <div class="sheet"><table class="ledger"><tr><th>天</th><th>环境</th><th>提交</th><th>丢掉</th><th>加班</th><th>下班</th></tr>
       ${(s.ledger||[]).map(d=>`<tr><td>${d.day}</td><td>${d.sick?'病假':d.collapsed?'病倒':d.workday?'×'+d.rate:'休'}</td><td>+${pts(d.formal_gain)}</td><td>${d.lost?pts(d.lost):'—'}</td><td>${d.overtime?clock(d.overtime):'—'}</td><td>${d.departure?clock(d.departure):'—'}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--mute)">还没有下过班</td></tr>'}</table></div>
@@ -804,6 +966,9 @@ function act(a,x){
     case 'begin':game.beginDay();ui.paused=false;break;
     case 'next':game.nextDay();ui.paused=true;break;
     case 'menu':ui.overlay='menu';ui.paused=true;break;
+    case 'calendar':ui.overlay='calendar';ui.paused=true;break;
+    case 'share':openShare();break;
+    case 'shareSys':if(ui.share&&ui.share.file)navigator.share({files:[ui.share.file],title:'今天也加班',text:'我在《今天也加班》里拿到了「'+honor(s)[0]+'」，你也来试试：'+SHARE_URL}).catch(()=>{});break;
     case 'traits':ui.overlay='traits';ui.paused=true;break;
     case 'catalog':ui.overlay='catalog';break;
     case 'ledger':ui.overlay='ledger';ui.paused=true;break;
@@ -838,7 +1003,7 @@ document.addEventListener('keydown',e=>{
   else if(e.key>='1'&&e.key<='4'&&s.phase==='choice')act('choose',String(+e.key-1));
 });
 document.addEventListener('visibilitychange',()=>{if(document.hidden){ui.paused=true;persist();dirty=true}});
-document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('contextmenu',e=>{if(!e.target.closest('.shareimg'))e.preventDefault()});
 game.onChange=()=>{dirty=true};
 
 /* ---------------------------------------------------------------- 主循环 */
