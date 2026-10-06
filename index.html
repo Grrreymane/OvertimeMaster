@@ -57,7 +57,7 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .cb.yellow{--c:#ffe08a;--e:#c29a2e;--t:#4a3a08}
 .cb.danger{--c:#e86a55;--e:#8d2f20;--t:#fff}
 .cb.hot{outline:3px solid #fffb;outline-offset:2px}
-.hand{position:absolute;left:50%;bottom:-22px;width:30px;height:38px;margin-left:-15px;z-index:3;pointer-events:none;animation:bob .9s ease-in-out infinite alternate;filter:drop-shadow(0 2px 3px #0007)}
+.hand{position:absolute;left:50%;bottom:-24px;width:32px;height:36px;margin-left:-14px;z-index:3;pointer-events:none;animation:bob .9s ease-in-out infinite alternate;filter:drop-shadow(0 2px 3px #0007)}
 .hand svg{width:100%;height:100%;display:block}
 .dur .hand{bottom:-30px}
 .dur.hot{outline:3px solid #fffb;outline-offset:2px}
@@ -109,7 +109,8 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .state{position:absolute;right:12px;bottom:4px;font-size:12px;font-weight:700;background:var(--paper);padding:3px 10px;border-radius:99px;box-shadow:0 2px 0 #0003}
 
 /* ---------- 信息区：文件夹 / 效率卡+便利贴 / 竖温度计 ---------- */
-.info{display:grid;grid-template-columns:1fr 62px;grid-template-rows:auto auto;gap:12px 10px;margin:12px 12px 8px}
+.info{display:grid;grid-template-columns:62px 1fr;grid-template-rows:auto auto;gap:12px 10px;margin:12px 12px 8px}
+.info .folder,.info .lower{grid-column:2}
 .folder{position:relative;background:var(--manila);border-radius:0 10px 10px 10px;padding:9px 12px 9px;box-shadow:0 3px 0 var(--manilaDk)}
 .folder::before{content:"项目";position:absolute;top:-18px;left:0;height:19px;padding:0 14px;background:var(--manila);border-radius:7px 7px 0 0;font-size:11px;font-weight:700;color:var(--manilaInk);line-height:20px}
 .folder .hd{display:flex;justify-content:space-between;align-items:baseline}
@@ -145,7 +146,7 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .tipnote b{display:block;font-family:var(--hand);font-weight:400;font-size:19px;line-height:1.2}
 .tipnote span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;opacity:.78;margin-top:4px;line-height:1.35}
 .tipnote.alert{background:linear-gradient(170deg,#ffd6c8,#ffb9a6 70%,#f2a08a);color:#5a1a0e}
-.thermo{grid-column:2;grid-row:1/3;background:var(--paper);border-radius:12px;box-shadow:0 2px 0 #0003;display:flex;flex-direction:column;align-items:center;padding:9px 0 10px;gap:2px}
+.thermo{grid-column:1;grid-row:1/3;background:var(--paper);border-radius:12px;box-shadow:0 2px 0 #0003;display:flex;flex-direction:column;align-items:center;padding:9px 0 10px;gap:2px}
 .thermo .k{font-size:11px;color:var(--mute)}
 .thermo b{font-size:24px;line-height:1.1}
 .thermo em{font-style:normal;font-size:11px;font-weight:700;margin-bottom:6px;text-align:center;line-height:1.25}
@@ -418,7 +419,7 @@ function tutAfter(a){
   if(ui.tutShown)tutSeen.add(ui.tutShown.id);
   saveTut();
 }
-const HAND='<i class="hand" aria-hidden="true"><svg viewBox="0 0 28 36"><rect x="4" y="11" width="20" height="17" rx="6" fill="#fff" stroke="#2d3437" stroke-width="1.8"/><path d="M17.5 11.5v4M21 13v4" stroke="#2d3437" stroke-width="1.6" stroke-linecap="round"/><rect x="9.5" y="1" width="7" height="17" rx="3.5" fill="#fff" stroke="#2d3437" stroke-width="1.8"/><rect x="6" y="27" width="16" height="8" rx="2" fill="#8fdcc6" stroke="#2d3437" stroke-width="1.8"/></svg></i>';
+const HAND='<i class="hand" aria-hidden="true"><svg viewBox="0 0 34 38"><path d="M11 18V5.5a2.5 2.5 0 0 1 5 0V15h.4V13a2.5 2.5 0 0 1 5 0v2.4h.3v-1a2.4 2.4 0 0 1 4.8 0V17h.2v-.6a2.3 2.3 0 0 1 4.6 0V26c0 5-4 9-9 9h-2.6c-3 0-5.4-1.3-7-3.6L4.3 25.2a2.4 2.4 0 0 1 3.6-3.1L11 25z" fill="#fff" stroke="#2d3437" stroke-width="1.8" stroke-linejoin="round"/></svg></i>';
 function hasSave(){try{return !!localStorage.getItem(SAVE_KEY)}catch(e){return false}}
 function persist(){if(game.s&&game.s.day){store(SAVE_KEY,game.s);ui.lastSave=performance.now()}}
 
@@ -627,8 +628,8 @@ function dockHTML(s,g){
     </div>
     <div class="trio">
       <button class="cb ${hot('rest')} ${off(c.rest)}" data-a="rest">${hand('rest')}${ic('rest')}<span>休息</span><small>压力 −${game.restRecovery()}</small></button>
-      <button class="cb lilac ${off(c.evidence)}" data-a="evidence">${ic('rec')}<span>存记录</span><small>${s.evidence}/3 · ${game.evidenceMinutes()}分</small></button>
-      <button class="cb yellow ${hot('submit')} ${off(c.submit)}" data-a="submit">${hand('submit')}${ic('submit')}<span>提交</span><small>${s.draft>0?'交'+pti(s.draft)+'点 · ':''}${c.waived?'记录 ':''}${c.subMin}分</small></button>
+      <button class="cb ${off(c.evidence)}" data-a="evidence">${ic('rec')}<span>存记录</span><small>${s.evidence}/3 · ${game.evidenceMinutes()}分</small></button>
+      <button class="cb ${hot('submit')} ${off(c.submit)}" data-a="submit">${hand('submit')}${ic('submit')}<span>提交</span><small>${s.draft>0?'交'+pti(s.draft)+'点 · ':''}${c.waived?'记录 ':''}${c.subMin}分</small></button>
     </div>`;
 }
 
