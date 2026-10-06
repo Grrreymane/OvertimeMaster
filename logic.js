@@ -188,7 +188,7 @@
       return clampf(1.0 - balance.monthly_coefficient * month / 60.0 - balance.fatigue_linear * fatigue - balance.fatigue_quadratic * fatigue * fatigue, balance.min_efficiency, 1.0);
     };
     G.fatigueCost = function (kind, overtime) {
-      if (kind === 'rest') return 0.0;
+      if (kind === 'rest' || kind === 'wait') return 0.0; // 等下班是摸鱼，不涨压力
       let per = overtime ? balance.overtime_fatigue_per_hour : balance.work_fatigue_per_hour;
       if (kind !== 'work') per = overtime ? balance.overtime_busy_fatigue_per_hour : balance.busy_fatigue_per_hour;
       if (kind === 'work' && overtime && G.hasTrait('leader_16')) per += 4.0;
