@@ -12,8 +12,8 @@
 <meta property="og:url" content="https://grrreymane.github.io/OvertimeMaster/">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=484bbee6") format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=484bbee6") format("woff2");font-display:swap}
+@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=63c152c4") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=63c152c4") format("woff2");font-display:swap}
 /* 手写体：站酷快乐体子集（ZCOOL KuaiLe，OFL）。
    风格：工位桌面。墨绿桌垫上摆着台历、考勤机、牛皮纸文件夹、便利贴、便函、工牌；按钮是黏土块。
    字体：黑体管数字和规则；手写体只给“人说的话”（便利贴、领导原话）；时钟是画出来的七段数码管。 */
@@ -295,7 +295,8 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .idcard .co{font-size:9.5px;letter-spacing:.15em;color:#9aa0a2}
 .idcard .nm{font-size:18px;font-weight:900}
 .idcard .q{font-family:var(--hand);font-size:15.5px;line-height:1.35}
-.idcard .ef{font-size:14px;font-weight:500;color:#3d4548;margin-top:6px;line-height:1.5}
+.idcard .ef{font-size:14px;font-weight:500;color:#3d4548;margin-top:1.1em;line-height:1.5}
+.hardtag{display:inline-block;margin-left:8px;font-family:var(--hand);font-size:14px;font-weight:400;color:var(--red);border:2px solid var(--red);border-radius:6px;padding:0 5px;transform:rotate(-6deg);vertical-align:2px}
 .idcard .ef b{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--red);border-radius:5px;padding:0 6px;margin-right:6px;vertical-align:1px}
 .seedline{font-size:11.5px;color:#cfe5de;text-align:center}
 .catalog{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -341,7 +342,7 @@ table.ledger{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
 (function(){
 'use strict';
 const L=OvertimeLogic, RULES=window.OVERTIME_RULES, game=L.createGame(RULES);
-const SAVE_KEY='overtime.mobile.v1', PLAYBACK=4, VERSION='网页版 0.15';
+const SAVE_KEY='overtime.mobile.v1', PLAYBACK=4, VERSION='网页版 0.16';
 const $=id=>document.getElementById(id);
 const screen=$('screen'), layer=$('layer'), toastBox=$('toast');
 
@@ -561,7 +562,7 @@ function titleView(){
 function idHTML(id){
   const d=game.leaderData(id);
   return `<article class="idcard"><div class="stripe"></div><div class="ph"><img src="${pic(id)}" alt="${esc(d.name)}"></div>
-    <div class="tx"><span class="co">加班有限公司 · 工牌</span><span class="nm">${esc(d.name)}</span><span class="q">“${esc(d.quote)}”</span><span class="ef"><b>效果</b>${esc(d.summary)}</span></div></article>`;
+    <div class="tx"><span class="co">加班有限公司 · 工牌</span><span class="nm">${esc(d.name)}${L.HARD_LEADERS.includes(id)?'<i class="hardtag">最烦</i>':''}</span><span class="q">“${esc(d.quote)}”</span><span class="ef"><b>效果</b>${esc(d.summary)}</span></div></article>`;
 }
 function cardsView(){
   const s=game.s,first=ui.intro,key='cards'+s.leader_week+first+s.seed;
@@ -757,8 +758,8 @@ function overlayHTML(){
     case 'traits':return `<div class="full" role="dialog" aria-label="本周领导"><h2>第${s.leader_week}周 · 三位领导</h2>
       <div class="sub">三张同时生效，每周一换人</div><div class="ids">${s.traits.map(idHTML).join('')}</div>
       <button class="cb mint wide" data-a="close"><span>回去干活</span></button></div>`;
-    case 'catalog':return `<div class="full" role="dialog" aria-label="全部领导"><h2>全部 18 位领导</h2><div class="sub">每周随机三位同时生效</div>
-      <div class="catalog">${L.LEADERS.map(id=>{const d=game.leaderData(id);return `<div class="mini"><div class="pic"><img src="${pic(id)}" alt="" loading="lazy"></div><b>${esc(d.name)}</b><q>${esc(d.quote)}</q><span>${esc(d.summary)}</span></div>`}).join('')}</div>
+    case 'catalog':return `<div class="full" role="dialog" aria-label="全部领导"><h2>全部 18 位领导</h2><div class="sub">每周随机三位同时生效 · 标“最烦”的每周最多来一位</div>
+      <div class="catalog">${L.LEADERS.map(id=>{const d=game.leaderData(id);return `<div class="mini"><div class="pic"><img src="${pic(id)}" alt="" loading="lazy"></div><b>${esc(d.name)}${L.HARD_LEADERS.includes(id)?'<i class="hardtag">最烦</i>':''}</b><q>${esc(d.quote)}</q><span>${esc(d.summary)}</span></div>`}).join('')}</div>
       <button class="cb mint wide" data-a="close"><span>返回</span></button></div>`;
     case 'ledger':return `<div class="full" role="dialog" aria-label="工作记录"><h2>工作记录</h2><div class="sub">每天提交、加班和下班时间</div>
       <div class="sheet"><table class="ledger"><tr><th>天</th><th>环境</th><th>提交</th><th>丢掉</th><th>加班</th><th>下班</th></tr>

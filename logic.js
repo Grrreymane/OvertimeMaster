@@ -58,10 +58,20 @@
   const pt = v => (v / 1000).toFixed(1);
   const SICK_RESET = 50; // 压力满100病倒：当天回家、下一个工作日病假，压力回到这里
 
-  function drawLeaders(seed) {
-    const r = new GodotRNG(seed), pool = LEADERS.slice(), out = [];
-    for (let i = 0; i < 3; i++) out.push(pool.splice(r.randi_range(0, pool.length - 1), 1)[0]);
+  // 最烦的一档：qa/balance/leaders.js 推演里“在岗一周”对交付影响最大的 6 位（0.16）。
+  // 每周最多抽到其中一位：抽到后，同周剩下的名额从池子里去掉其他最烦的。
+  const HARD_LEADERS = ['leader_07', 'leader_05', 'leader_13', 'leader_18', 'leader_12', 'leader_02'];
+  function drawThree(r, pool) {
+    const out = [];
+    for (let i = 0; i < 3; i++) {
+      const id = pool.splice(r.randi_range(0, pool.length - 1), 1)[0];
+      out.push(id);
+      if (HARD_LEADERS.includes(id)) for (let k = pool.length - 1; k >= 0; k--) if (HARD_LEADERS.includes(pool[k])) pool.splice(k, 1);
+    }
     return out;
+  }
+  function drawLeaders(seed) {
+    return drawThree(new GodotRNG(seed), LEADERS.slice());
   }
   function makeWeeklyTraits(seed) {
     const schedule = {}; let previous = [];
@@ -70,8 +80,7 @@
       if (week === 1) selected = drawLeaders(seed);
       else {
         const r = new GodotRNG(seed ^ (week * 0x751AB));
-        const pool = LEADERS.filter(id => !previous.includes(id));
-        for (let i = 0; i < 3; i++) selected.push(pool.splice(r.randi_range(0, pool.length - 1), 1)[0]);
+        selected = drawThree(r, LEADERS.filter(id => !previous.includes(id)));
       }
       schedule[String(week)] = selected; previous = selected;
     }
@@ -634,5 +643,5 @@
     return G;
   }
 
-  return { GodotRNG, createGame, drawLeaders, makeWeeklyTraits, makeCalendar, TOTAL, LEADERS, RATES, RATE_NAMES, WEEKDAYS, workday, weekNumber, clock, hours, endTime };
+  return { GodotRNG, HARD_LEADERS, createGame, drawLeaders, makeWeeklyTraits, makeCalendar, TOTAL, LEADERS, RATES, RATE_NAMES, WEEKDAYS, workday, weekNumber, clock, hours, endTime };
 });
