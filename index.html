@@ -12,8 +12,8 @@
 <meta property="og:url" content="https://grrreymane.github.io/OvertimeMaster/">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=a7e55877") format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=a7e55877") format("woff2");font-display:swap}
+@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=edca6363") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=edca6363") format("woff2");font-display:swap}
 /* 手写体：站酷快乐体子集（ZCOOL KuaiLe，OFL）。
    风格：工位桌面。墨绿桌垫上摆着台历、考勤机、牛皮纸文件夹、便利贴、便函、工牌；按钮是黏土块。
    字体：黑体管数字和规则；手写体只给“人说的话”（便利贴、领导原话）；时钟是画出来的七段数码管。 */
@@ -490,11 +490,17 @@ function guide(s){
   if(s.phase==='running')return ui.paused?{b:'暂停中',d:'点进度条继续。',k:'clock'}:{b:'干活中…',d:'遇到事件会停下。',k:'clock'};
   const sub=game.submitMinutes(ui.useEv),finish=endTime(s.minute,sub),shut=game.shutdownTime();
   if(s.draft>0&&finish>shut)return{b:'来不及交了',d:'没交的草稿下班会丢。',k:'alert'};
+  // 按紧急程度：压力太高 → 深夜还有草稿没交 → 快到 HR 红线 → 平时的提交/休息建议（warn 让便签变红，并压过新手引导）
+  const canRest=endTime(s.minute,30)<=shut;
+  if(s.fatigue>=70&&canRest)return s.fatigue>=85
+    ?{b:'快撑不住了！',d:'满100会病倒，明天请病假。先休息。',k:'rest',warn:true}
+    :{b:'压力太高了',d:`效率只剩${Math.round(game.efficiency()*100)}%，休息30分钟−${game.restRecovery()}。`,k:'rest',warn:true};
+  if(s.draft>0&&s.minute>=1200&&game.submissionBlock()==='')return{b:'加班别忘交',d:'越晚越危险：HR或停机会让没交的草稿白干。',k:'submit',warn:true};
+  if(!game.overtimeBlocked()&&s.month>=2400&&s.minute>=1080)return{b:'快到HR红线',d:`本月加班${(s.month/60).toFixed(1)}/45小时，交了早点走。`,k:'home',warn:true};
   if(s.draft>0&&(game.projectRemaining()===0||s.draft>=60000||finish+30>=shut)){
     if(game.submissionBlock()!=='')return{b:'再做一点',d:'果树农民每次至少收30点。',k:'work'};
     return{b:'交一次草稿',d:'攒够了交，交了才算进度。',k:'submit'};
   }
-  if(s.fatigue>=85)return{b:'快撑不住了！',d:'压力满100会病倒，明天请病假。',k:'rest'};
   if(s.fatigue>=40&&endTime(s.minute,30)<=shut)return{b:'歇一会儿吧',d:`休息30分钟，压力−${game.restRecovery()}。`,k:'rest'};
   if(s.minute>=shut-30)return{b:'准备下班',d:'时间不多了。',k:'clock'};
   if(!s.tutorial_worked)return{b:'先干活！',d:'点工作，做出第一份草稿。',k:'work'};
@@ -591,7 +597,7 @@ function playView(){
   const cells=[];for(let i=0;i<26;i++){const lo=i*100000,f=Math.max(0,Math.min(1,(s.formal-lo)/100000)),d=Math.max(0,Math.min(1,(s.formal+s.draft-lo)/100000))-f;
     cells.push(f>=1?'<i class="on"></i>':`<i>${f>0?`<span class="p" style="width:${f*100}%"></span>`:''}${d>0?`<span class="d" style="left:${f*100}%;width:${d*100}%"></span>`:''}</i>`)}
   const E=effInfo(s),tot=Math.round(E.total*100),ec=E.total>=.7?'#2f7d6b':E.total>=.4?'#c87a1a':'#c8463a';
-  const g0=guide(s),tip=g0&&g0.k==='alert'?null:tutTip(s);ui.tutShown=tip;
+  const g0=guide(s),tip=g0&&(g0.k==='alert'||g0.warn)?null:tutTip(s);ui.tutShown=tip;
   const g=tip?{b:tip.b,d:tip.d,k:tip.k||'',tut:true}:g0,col=lvlColor(s.fatigue);
   put('info',`<div class="folder">
       <div class="hd"><span class="big tnum">${pti(s.formal)}<small> / 2600 点</small></span><span class="due">还剩 <b>${30-s.day}</b> 天</span></div>
@@ -602,7 +608,7 @@ function playView(){
       <div class="eff"><div class="eh"><span>产出效率</span><b class="tnum" style="color:${ec}">${tot}%</b></div>
         <div class="ebar"><i style="width:${Math.min(100,tot)}%;background:${ec}"></i></div>
         <ul class="${E.rows.length>4?'two':''}">${E.rows.map(r=>`<li><span>${r.t}</span><em class="${r.neg?'neg':''}">${r.v}</em></li>`).join('')}</ul></div>
-      ${g?`<div class="tipnote ${g.k==='alert'?'alert':''}">${g.tut?'<i class="tut">新手指引</i>':''}<b>${g.b}</b><span>${g.d}</span></div>`:''}
+      ${g?`<div class="tipnote ${g.k==='alert'||g.warn?'alert':''}">${g.tut?'<i class="tut">新手指引</i>':''}<b>${g.b}</b><span>${g.d}</span></div>`:''}
     </div>
     <div class="thermo"><span class="k">压力</span><b class="tnum" style="color:${col}">${Math.round(s.fatigue)}</b><em style="color:${col}">${lvlWord(s.fatigue)}</em>
       <div class="gl"><div class="tube"><i style="height:${Math.max(4,s.fatigue)}%;background:linear-gradient(0deg,${col},${col}cc)"></i></div><div class="bulb" style="background:${col}"></div></div></div>`);
