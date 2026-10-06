@@ -12,8 +12,8 @@
 <meta property="og:url" content="https://grrreymane.github.io/OvertimeMaster/">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=91ca4bb2") format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=91ca4bb2") format("woff2");font-display:swap}
+@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=f88afcab") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=f88afcab") format("woff2");font-display:swap}
 /* 手写体：站酷快乐体子集（ZCOOL KuaiLe，OFL）。
    风格：工位桌面。墨绿桌垫上摆着台历、考勤机、牛皮纸文件夹、便利贴、便函、工牌；按钮是黏土块。
    字体：黑体管数字和规则；手写体只给“人说的话”（便利贴、领导原话）；时钟是画出来的七段数码管。 */
@@ -58,6 +58,8 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .cb.hot{outline:3px solid #fffb;outline-offset:2px}
 .hand{position:absolute;left:50%;bottom:-22px;width:30px;height:38px;margin-left:-15px;z-index:3;pointer-events:none;animation:bob .9s ease-in-out infinite alternate;filter:drop-shadow(0 2px 3px #0007)}
 .hand svg{width:100%;height:100%;display:block}
+.dur .hand{bottom:-30px}
+.dur.hot{outline:3px solid #fffb;outline-offset:2px}
 @keyframes bob{from{transform:translateY(4px)}to{transform:translateY(-3px)}}
 .tipnote .tut{display:block;font-size:10px;font-weight:700;letter-spacing:.1em;color:#a07a10;margin-bottom:2px}
 .cb.wide{display:flex;justify-content:center;align-items:center;gap:8px;font-size:17px;font-weight:900;height:56px}
@@ -91,10 +93,12 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .daybar b{position:absolute;top:-3px;width:2px;height:11px;background:#fff;border-radius:2px}
 .dayrow{position:relative;height:13px;font-size:10px;color:#cfd6d8}
 .dayrow span{position:absolute;transform:translateX(-50%);white-space:nowrap}
-.side{width:88px;flex:none;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
-.menu2{height:34px;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--paper);border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 3px 0 #c9bfa8}
-.menu2 i{font-style:normal;font-size:15px;line-height:1}
-.faces{display:flex;justify-content:center;background:#0003;border-radius:99px;padding:3px}
+.menu2{width:56px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--paper);border-radius:8px;font-size:12px;font-weight:700;box-shadow:0 2px 0 #0003}
+.menu2 i{font-style:normal;font-size:24px;line-height:1}
+.bosses{display:flex;align-items:center;gap:8px;margin:2px 12px 0;padding:3px 12px 3px 3px;align-self:flex-start;background:#0003;border-radius:99px;font-size:12px;color:#e8f2ee}
+.bosses span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bosses small{color:#cfe5dc99;font-size:11px}
+.faces{display:flex;flex:none}
 .faces img{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:50% 12%;background:#c3d1c6;border:2px solid var(--paper);margin-right:-7px}
 .faces img:last-child{margin-right:0}
 
@@ -349,8 +353,10 @@ const tutSeen=new Set(load('overtime.mobile.tut',[]));
 const saveTut=()=>store('overtime.mobile.tut',[...tutSeen]);
 // 新手引导：按顺序找第一条“条件成立且没看过”的；k 是要点的按钮（null 表示只是说明，做任意操作后算看过）
 const TUT=[
-  {id:'work',  when:s=>!s.tutorial_worked, b:'先点工作！', d:'干活会做出草稿。右上角能切时长。', k:'work'},
-  {id:'submit',when:s=>s.draft>0&&!s.tutorial_submitted, b:'把草稿交了', d:'交了才算进度，没交的下班会丢。', k:'submit'},
+  {id:'work',  when:s=>!s.tutorial_worked, b:'先点工作！', d:'干活会做出草稿。', k:'work'},
+  {id:'dur',   when:s=>s.tutorial_worked, b:'时长能切换', d:'点「30分 ⇄」，一次干15到120分钟。', k:'cyc'},
+  {id:'stack', when:s=>s.draft>0&&!s.tutorial_submitted, b:'草稿会攒着', d:'不用每次都交，接着干。下班会帮你一起交。', k:'work'},
+  {id:'submit',when:s=>s.draft>=60000&&!s.tutorial_submitted, b:'攒够了交一次', d:'交了才算进度，也防领导返工扣草稿。', k:'submit'},
   {id:'grid',  when:s=>s.tutorial_submitted, b:'涂满26格就赢', d:'文件夹里一格100点，30天内交满。', k:null},
   {id:'rec',   when:s=>s.evidence>0, b:'聊天记录很有用', d:'领导刁难时拿出来，省时间、保草稿。', k:null},
   {id:'eff',   when:s=>s.fatigue>=40, b:'累了干得慢', d:'看左边的产出效率。休息能降压力。', k:'rest'},
@@ -363,10 +369,10 @@ function tutTip(s){
 }
 function tutAfter(a){
   const s=game.s;if(!s||!s.day)return;
-  for(const t of TUT){if(tutSeen.has(t.id))continue;
-    // 条件已经过去（比如已经工作过）或者玩家做了它要的操作
-    if((t.id==='work'&&s.tutorial_worked)||(t.id==='submit'&&s.tutorial_submitted)||t.k===a){tutSeen.add(t.id)}}
-  const cur=ui.tutShown;if(cur&&!cur.k&&['work','rest','evidence','submit','home'].includes(a))tutSeen.add(cur.id);
+  if(s.tutorial_worked)tutSeen.add('work');
+  if(s.tutorial_submitted){tutSeen.add('stack');tutSeen.add('submit')}
+  if(a==='cyc')tutSeen.add('dur');
+  if(ui.tutShown)tutSeen.add(ui.tutShown.id);
   saveTut();
 }
 const HAND='<i class="hand" aria-hidden="true"><svg viewBox="0 0 28 36"><rect x="4" y="11" width="20" height="17" rx="6" fill="#fff" stroke="#2d3437" stroke-width="1.8"/><path d="M17.5 11.5v4M21 13v4" stroke="#2d3437" stroke-width="1.6" stroke-linecap="round"/><rect x="9.5" y="1" width="7" height="17" rx="3.5" fill="#fff" stroke="#2d3437" stroke-width="1.8"/><rect x="6" y="27" width="16" height="8" rx="2" fill="#8fdcc6" stroke="#2d3437" stroke-width="1.8"/></svg></i>';
@@ -440,9 +446,9 @@ function guide(s){
   if(s.phase==='running')return ui.paused?{b:'暂停中',d:'点进度条继续。',k:'clock'}:{b:'干活中…',d:'遇到事件会停下。',k:'clock'};
   const sub=game.submitMinutes(ui.useEv),finish=endTime(s.minute,sub),shut=game.shutdownTime();
   if(s.draft>0&&finish>shut)return{b:'来不及交了',d:'没交的草稿下班会丢。',k:'alert'};
-  if(s.draft>0&&(game.projectRemaining()===0||!s.tutorial_submitted||finish+30>=shut)){
+  if(s.draft>0&&(game.projectRemaining()===0||s.draft>=60000||finish+30>=shut)){
     if(game.submissionBlock()!=='')return{b:'再做一点',d:'果树农民每次至少收30点。',k:'work'};
-    return{b:'先把草稿交了！',d:'提交了，进度才会涨。',k:'submit'};
+    return{b:'交一次草稿',d:'攒够了交，交了才算进度。',k:'submit'};
   }
   if(s.fatigue>=40&&endTime(s.minute,30)<=shut)return{b:'歇一会儿吧',d:`休息30分钟，压力−${game.restRecovery()}。`,k:'rest'};
   if(s.minute>=shut-30)return{b:'准备下班',d:'时间不多了。',k:'clock'};
@@ -521,6 +527,7 @@ function cardsView(){
 function playView(){
   const s=game.s;
   setScreen('play',`<div class="hud" data-part="hud"></div>
+    <button class="bosses" data-part="bosses" data-a="traits" aria-label="本周领导"></button>
     <div class="scene"><canvas id="cv"></canvas><div data-part="sceneUI"></div></div>
     <div class="info" data-part="info"></div><div class="dock" data-part="dock"></div>`);
   const ph=phaseOf(s),shut=game.shutdownTime(),pct=m=>Math.max(0,Math.min(100,(m-540)/(shut-540)*100)),ed=game.earliestDeparture();
@@ -530,8 +537,8 @@ function playView(){
     <div class="punch ${ph.c}"><div class="lcd"><div class="ind"><b>${indL}</b>${indR}</div>${lcdSVG(clock(s.minute).padStart(5,'0'))}</div>
       <div class="daybar"><i style="width:${pct(s.minute)}%"></i><b style="left:${pct(ed)}%"></b></div>
       <div class="dayrow"><span style="left:${Math.min(80,pct(ed))}%">${clock(ed)} 下班</span></div></div>
-    <div class="side"><button class="menu2" data-a="menu"><i>≡</i>菜单</button>
-      <button class="faces" data-a="traits" aria-label="本周领导">${s.traits.map(id=>`<img src="${pic(id)}" alt="">`).join('')}</button></div>`);
+    <button class="menu2" data-a="menu"><i>≡</i>菜单</button>`);
+  put('bosses',`<span class="faces">${s.traits.map(id=>`<img src="${pic(id)}" alt="">`).join('')}</span><span>${s.traits.map(id=>esc(game.leaderData(id).name)).join(' · ')}</span><small>›</small>`);
   const run=s.phase==='running'&&s.jobs[0];
   put('sceneUI',run?`<span class="state">${ui.paused?'已暂停':game.actionName(run.kind)+'中…'}</span>`:'');
   // 文件夹：26 格，一格 100 点；已交实心、草稿斜纹（按比例画进格子）
@@ -572,13 +579,13 @@ function dockHTML(s,g){
     :`<button class="cb off2 coral ${hot('home')} ${off(c.home)}" data-a="home">${hand('home')}${ic('card')}<span>下班</span><small>${s.minute<ed?clock(ed)+'后走':s.draft>0?'先交再走':'现在走'}</small></button>`;
   return `<div class="drow">
       <button class="cb mint work ${hot('work')} ${off(c.work)}" data-a="work">${hand('work')}${ic('work')}<span>工作</span><small>${risky?'做完来不及交':'约草稿 +'+pts(pv.gain)}</small></button>
-      <button class="dur" data-a="cyc" aria-label="切换工作时长">${ui.dur}分 ⇄</button>
+      <button class="dur ${hot('cyc')}" data-a="cyc" aria-label="切换工作时长">${hand('cyc')}${ui.dur}分 ⇄</button>
       ${home}
     </div>
     <div class="trio">
       <button class="cb ${hot('rest')} ${off(c.rest)}" data-a="rest">${hand('rest')}${ic('rest')}<span>休息</span><small>压力 −${game.restRecovery()}</small></button>
       <button class="cb lilac ${off(c.evidence)}" data-a="evidence">${ic('rec')}<span>存记录</span><small>${s.evidence}/3 · ${game.evidenceMinutes()}分</small></button>
-      <button class="cb yellow ${hot('submit')} ${off(c.submit)}" data-a="submit">${hand('submit')}${ic('submit')}<span>提交</span><small>${c.waived?'用记录 ':''}${c.subMin}分钟</small></button>
+      <button class="cb yellow ${hot('submit')} ${off(c.submit)}" data-a="submit">${hand('submit')}${ic('submit')}<span>提交</span><small>${s.draft>0?'交'+pti(s.draft)+'点 · ':''}${c.waived?'记录 ':''}${c.subMin}分</small></button>
     </div>`;
 }
 
@@ -747,7 +754,7 @@ function act(a,x){
     case 'fast':ui.fast=true;ui.paused=false;break;
     case 'cancel':game.cancelPlan();break;
   }
-  if(['work','rest','evidence','submit','home'].includes(a))tutAfter(a);
+  if(['work','rest','evidence','submit','home','cyc'].includes(a))tutAfter(a);
   if(ui.view==='play')persist();
   dirty=true;
 }
