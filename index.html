@@ -458,7 +458,7 @@ function drawOffice(cv,minute,row,frame){
   const dw=FW*scale,dh=FH*scale,dx=W/2-0.489*dw,dy=H/2-0.481*dh;
   const sh=c.createRadialGradient(W/2,dy+0.86*dh,0,W/2,dy+0.86*dh,dw*0.44);
   sh.addColorStop(0,'rgba(0,0,0,.3)');sh.addColorStop(1,'rgba(0,0,0,0)');
-  c.save();c.translate(0,dy+0.86*dh);c.scale(1,.2);c.translate(0,-(dy+0.86*dh));c.fillStyle=sh;c.fillRect(0,0,W,H*4);c.restore();
+  c.save();c.translate(0,dy+0.86*dh);c.scale(1,.2);c.translate(0,-(dy+0.86*dh));c.fillStyle=sh;c.fillRect(0,-H*6,W,H*12);c.restore();  // 填充要盖住整个椭圆，否则矩形边缘会切出一道硬线
   const alphas=[1,wt[1]/Math.max(wt[0]+wt[1],.001),wt[2]];
   ['day','sunset','night'].forEach((n,i)=>{const im=office.imgs[n];if(!im.complete||!im.naturalWidth||alphas[i]<=0)return;
     c.globalAlpha=alphas[i];c.drawImage(im,frame*FW,row*FH,FW,FH,dx,dy,dw,dh)});
