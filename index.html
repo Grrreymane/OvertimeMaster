@@ -12,8 +12,8 @@
 <meta property="og:url" content="https://grrreymane.github.io/OvertimeMaster/">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=f88afcab") format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=f88afcab") format("woff2");font-display:swap}
+@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=4b3ced24") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=4b3ced24") format("woff2");font-display:swap}
 /* 手写体：站酷快乐体子集（ZCOOL KuaiLe，OFL）。
    风格：工位桌面。墨绿桌垫上摆着台历、考勤机、牛皮纸文件夹、便利贴、便函、工牌；按钮是黏土块。
    字体：黑体管数字和规则；手写体只给“人说的话”（便利贴、领导原话）；时钟是画出来的七段数码管。 */
@@ -36,8 +36,10 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 #app{position:relative;width:100%;max-width:440px;height:100%;overflow:hidden;display:flex;flex-direction:column;
   background:radial-gradient(120% 80% at 50% 30%,var(--matHi),var(--mat));
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@supports (height:100dvh){#app{height:100dvh}}
 @media (min-width:600px){#app{height:min(100%,900px);margin:auto;border-radius:24px;box-shadow:0 20px 60px #000a}}
-#screen{flex:1;display:flex;flex-direction:column;min-height:0}
+@supports (height:100dvh){@media (min-width:600px){#app{height:min(100dvh,900px)}}}
+#screen{flex:1;display:flex;flex-direction:column;min-height:0;overflow-y:auto;overflow-x:hidden}
 #screen>*{flex:none}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .off{opacity:.42;filter:saturate(.5)}
@@ -167,6 +169,31 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .cb.run span{font-size:20px}
 .lockline{height:54px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#cfe5de;border-radius:14px;border:2px dashed #ffffff2e}
 
+
+/* ---------- 矮屏适配（三星等浏览器底部有工具栏，可见高度常在 640—740） ---------- */
+@media (max-height:780px){
+  .hud{padding:8px 10px 4px;gap:6px}
+  .cal .cd{font-size:32px} .lcd svg{height:36px} .lcd .ind{line-height:12px}
+  .bosses{margin-top:0}
+  .scene{min-height:110px}
+  .info{gap:9px 8px;margin:9px 10px 6px}
+  .folder{padding:7px 10px} .folder .big{font-size:21px} .grid26{gap:2px;margin-top:4px} .grid26 i{aspect-ratio:1.6}
+  .folder .lg{margin-top:4px}
+  .eff{padding:7px 9px;gap:4px} .eff .eh b{font-size:19px} .eff li{font-size:10.5px;line-height:1.35}
+  .tipnote{width:108px;min-height:80px;padding:14px 9px 8px} .tipnote b{font-size:16px} .tipnote span{font-size:10.5px}
+  .thermo b{font-size:20px}
+  .dock{padding:2px 10px 10px;gap:8px}
+  .cb.work,.cb.off2,.cb.run{height:60px} .cb.work span{font-size:22px} .cb.off2 span{font-size:20px}
+  .cb.work .ico{font-size:26px} .cb.off2 .ico{font-size:24px}
+  .trio .cb,.lockline{height:48px} .trio .cb span{font-size:15px}
+  .dur{top:7px}
+}
+@media (max-height:690px){
+  .bosses,.eff ul,.tipnote span,.folder .lg,.thermo em{display:none}
+  .hud{padding-top:6px} .lcd .ind{display:none} .lcd svg{height:32px}
+  .tipnote{min-height:64px}
+  .cb.work,.cb.off2,.cb.run{height:54px} .trio .cb,.lockline{height:44px} .trio .cb small{display:none}
+}
 /* ---------- 纸张类弹层 ---------- */
 .dim{position:absolute;inset:0;background:#0b1a1666;z-index:15;animation:fade .2s}
 @keyframes fade{from{opacity:0}}
@@ -355,8 +382,8 @@ const saveTut=()=>store('overtime.mobile.tut',[...tutSeen]);
 const TUT=[
   {id:'work',  when:s=>!s.tutorial_worked, b:'先点工作！', d:'干活会做出草稿。', k:'work'},
   {id:'dur',   when:s=>s.tutorial_worked, b:'时长能切换', d:'点「30分 ⇄」，一次干15到120分钟。', k:'cyc'},
-  {id:'stack', when:s=>s.draft>0&&!s.tutorial_submitted, b:'草稿会攒着', d:'不用每次都交，接着干。下班会帮你一起交。', k:'work'},
-  {id:'submit',when:s=>s.draft>=60000&&!s.tutorial_submitted, b:'攒够了交一次', d:'交了才算进度，也防领导返工扣草稿。', k:'submit'},
+  {id:'stack', when:s=>s.draft>0&&!s.tutorial_submitted, b:'草稿先攒着', d:'不用干完就交，攒一些再交更省时间。', k:'work'},
+  {id:'submit',when:s=>s.draft>=60000&&!s.tutorial_submitted, b:'记得交一次', d:'没交的草稿会被领导返工扣掉，交了才稳。', k:'submit'},
   {id:'grid',  when:s=>s.tutorial_submitted, b:'涂满26格就赢', d:'文件夹里一格100点，30天内交满。', k:null},
   {id:'rec',   when:s=>s.evidence>0, b:'聊天记录很有用', d:'领导刁难时拿出来，省时间、保草稿。', k:null},
   {id:'eff',   when:s=>s.fatigue>=40, b:'累了干得慢', d:'看左边的产出效率。休息能降压力。', k:'rest'},
