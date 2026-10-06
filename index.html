@@ -12,8 +12,8 @@
 <meta property="og:url" content="https://grrreymane.github.io/OvertimeMaster/">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=fccc305f") format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=fccc305f") format("woff2");font-display:swap}
+@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=484bbee6") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=484bbee6") format("woff2");font-display:swap}
 /* 手写体：站酷快乐体子集（ZCOOL KuaiLe，OFL）。
    风格：工位桌面。墨绿桌垫上摆着台历、考勤机、牛皮纸文件夹、便利贴、便函、工牌；按钮是黏土块。
    字体：黑体管数字和规则；手写体只给“人说的话”（便利贴、领导原话）；时钟是画出来的七段数码管。 */
@@ -289,14 +289,14 @@ button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
 .idcard{flex:1 1 0;min-height:112px;display:flex;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 0 #0003;position:relative}
 .idcard::before{content:"";position:absolute;top:8px;left:50%;width:34px;height:6px;margin-left:-17px;border-radius:4px;background:var(--mat)}
 .idcard .stripe{width:8px;flex:none;background:var(--red)}
-.idcard:nth-child(2) .stripe{background:#e08a2c} .idcard:nth-child(3) .stripe{background:var(--green)}
 .idcard .ph{width:30%;max-width:140px;flex:none;margin:20px 0 12px 10px;background:#c3d1c6;border-radius:6px;overflow:hidden}
 .idcard .ph img{width:100%;height:100%;object-fit:cover;object-position:50% 15%}
 .idcard .tx{flex:1;min-width:0;padding:22px 12px 10px;display:flex;flex-direction:column;gap:3px}
 .idcard .co{font-size:9.5px;letter-spacing:.15em;color:#9aa0a2}
 .idcard .nm{font-size:18px;font-weight:900}
 .idcard .q{font-family:var(--hand);font-size:15.5px;line-height:1.35}
-.idcard .ef{font-size:11.5px;color:#5f6669;border-top:1px solid #0001;padding-top:4px;margin-top:auto;line-height:1.45}
+.idcard .ef{font-size:14px;font-weight:500;color:#3d4548;margin-top:6px;line-height:1.5}
+.idcard .ef b{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:var(--red);border-radius:5px;padding:0 6px;margin-right:6px;vertical-align:1px}
 .seedline{font-size:11.5px;color:#cfe5de;text-align:center}
 .catalog{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mini{background:#fff;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 3px 0 #0003}
@@ -561,7 +561,7 @@ function titleView(){
 function idHTML(id){
   const d=game.leaderData(id);
   return `<article class="idcard"><div class="stripe"></div><div class="ph"><img src="${pic(id)}" alt="${esc(d.name)}"></div>
-    <div class="tx"><span class="co">加班有限公司 · 工牌</span><span class="nm">${esc(d.name)}</span><span class="q">“${esc(d.quote)}”</span><span class="ef">${esc(d.summary)}</span></div></article>`;
+    <div class="tx"><span class="co">加班有限公司 · 工牌</span><span class="nm">${esc(d.name)}</span><span class="q">“${esc(d.quote)}”</span><span class="ef"><b>效果</b>${esc(d.summary)}</span></div></article>`;
 }
 function cardsView(){
   const s=game.s,first=ui.intro,key='cards'+s.leader_week+first+s.seed;
