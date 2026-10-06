@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#2a5149">
+<title>今天也加班</title>
+<meta name="description" content="今天也加班：领导催，同事坑，项目还得你来扛。30天内交满2600点。">
+<meta property="og:title" content="今天也加班">
+<meta property="og:description" content="领导催，同事坑，项目还得你来扛。18位奇葩领导，30天内交满2600点。">
+<meta property="og:image" content="https://grrreymane.github.io/OvertimeMaster/cover.png">
+<meta property="og:url" content="https://grrreymane.github.io/OvertimeMaster/">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=91ca4bb2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=91ca4bb2") format("woff2");font-display:swap}
+/* 手写体：站酷快乐体子集（ZCOOL KuaiLe，OFL）。
+   风格：工位桌面。墨绿桌垫上摆着台历、考勤机、牛皮纸文件夹、便利贴、便函、工牌；按钮是黏土块。
+   字体：黑体管数字和规则；手写体只给“人说的话”（便利贴、领导原话）；时钟是画出来的七段数码管。 */
+:root{
+  --mat:#2a5149; --matHi:#2f5a51; --paper:#f6efdf; --paperInk:#2d3437; --mute:#7a7f80;
+  --manila:#e9cd95; --manilaDk:#c9a462; --manilaInk:#5c4618;
+  --note:#ffe27a; --red:#c8463a; --amber:#ffc95e; --panel:#1f2a2e; --lcdOn:#9ff0b8;
+  --green:#2f7d6b; --orange:#c87a1a;
+  --sans:"Noto SC Game","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --hand:"Hand Game","Noto SC Game",cursive;
+  color-scheme:light;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:#0e1b22;color:var(--paperInk);font-family:var(--sans);overscroll-behavior:none}
+body{display:flex;justify-content:center;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;font-size:inherit;text-align:inherit}
+button:focus-visible{outline:3px solid #fff8;outline-offset:2px}
+.tnum{font-variant-numeric:tabular-nums}
+.ico{width:1em;height:1em;flex:none;display:inline-block;vertical-align:-.12em}
+#app{position:relative;width:100%;max-width:440px;height:100%;overflow:hidden;display:flex;flex-direction:column;
+  background:radial-gradient(120% 80% at 50% 30%,var(--matHi),var(--mat));
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (min-width:600px){#app{height:min(100%,900px);margin:auto;border-radius:24px;box-shadow:0 20px 60px #000a}}
+#screen{flex:1;display:flex;flex-direction:column;min-height:0}
+#screen>*{flex:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.off{opacity:.42;filter:saturate(.5)}
+
+/* ---------- 黏土按钮：厚、圆、有下沿，一个动作一种颜色 ---------- */
+.cb{--c:#f6efdf;--e:#c9bfa8;--t:#2d3437;position:relative;border-radius:18px;background:var(--c);color:var(--t);
+  box-shadow:inset 0 2px 0 #ffffff80,0 5px 0 var(--e),0 8px 10px #0004;
+  display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:8px;align-items:center;padding:8px 12px;text-align:left}
+.cb:active{transform:translateY(3px);box-shadow:inset 0 2px 0 #ffffff80,0 2px 0 var(--e),0 3px 5px #0004}
+.cb .ico{grid-row:1/3;font-size:24px}
+.cb span{font-size:16px;font-weight:900;line-height:1.15}
+.cb small{font-size:11px;font-weight:500;opacity:.78;white-space:nowrap}
+.cb.mint{--c:#8fdcc6;--e:#2f7d6b;--t:#123d33}
+.cb.coral{--c:#ff9f86;--e:#b0503c;--t:#4a1408}
+.cb.lilac{--c:#d9d2f0;--e:#8f84b8;--t:#2d2650}
+.cb.yellow{--c:#ffe08a;--e:#c29a2e;--t:#4a3a08}
+.cb.danger{--c:#e86a55;--e:#8d2f20;--t:#fff}
+.cb.hot{outline:3px solid #fffb;outline-offset:2px}
+.hand{position:absolute;left:50%;bottom:-22px;width:30px;height:38px;margin-left:-15px;z-index:3;pointer-events:none;animation:bob .9s ease-in-out infinite alternate;filter:drop-shadow(0 2px 3px #0007)}
+.hand svg{width:100%;height:100%;display:block}
+@keyframes bob{from{transform:translateY(4px)}to{transform:translateY(-3px)}}
+.tipnote .tut{display:block;font-size:10px;font-weight:700;letter-spacing:.1em;color:#a07a10;margin-bottom:2px}
+.cb.wide{display:flex;justify-content:center;align-items:center;gap:8px;font-size:17px;font-weight:900;height:56px}
+.cb.wide span{font-size:17px}
+
+/* ---------- 提示：小便利贴 ---------- */
+#toast{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 92px);transform:translateX(-50%);z-index:90;pointer-events:none;
+  width:calc(100% - 48px);display:flex;flex-direction:column;align-items:center;gap:6px}
+#toast div{background:var(--note);color:#4a3d10;padding:8px 14px;font-size:13.5px;font-weight:700;line-height:1.45;box-shadow:0 4px 10px #0005;
+  animation:pop .25s ease-out;text-align:center;transform:rotate(-1deg)}
+@keyframes pop{from{transform:translateY(-6px);opacity:0}}
+
+/* ---------- 顶栏：台历 + 考勤机 + 菜单/头像 ---------- */
+.hud{display:flex;align-items:stretch;gap:8px;padding:10px 12px 6px}
+.cal{width:56px;flex:none;background:var(--paper);border-radius:8px;overflow:hidden;text-align:center;box-shadow:0 2px 0 #0003}
+.cal .ch{background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 0 3px}
+.cal .cd{font-size:26px;font-weight:900;line-height:1.2;padding-top:3px}
+.cal .ct{font-size:10px;color:var(--mute);padding-bottom:4px}
+.punch{flex:1;min-width:0;background:var(--panel);border-radius:10px;padding:6px 8px 4px;display:flex;flex-direction:column;gap:5px;box-shadow:0 2px 0 #0003}
+.lcd{background:#14201b;border-radius:6px;box-shadow:inset 0 2px 6px #000a;padding:3px 8px 6px;display:flex;flex-direction:column;align-items:center}
+.lcd .ind{align-self:stretch;display:flex;justify-content:space-between;font-size:10px;font-weight:700;line-height:14px;letter-spacing:.06em;color:#9ff0b84d}
+.lcd .ind b{color:var(--lcdOn)}
+.lcd svg{display:block;height:44px;width:auto;max-width:100%}
+.seg{fill:var(--lcdOn);filter:drop-shadow(0 0 3px #9ff0b866)}
+.segOff{fill:#ffffff0d}
+.punch.ot .seg{fill:var(--amber);filter:drop-shadow(0 0 3px #ffc95e66)} .punch.ot .ind b{color:var(--amber)}
+.punch.late .seg,.punch.ban .seg{fill:#ff9c83;filter:drop-shadow(0 0 3px #ff9c8366)} .punch.late .ind b,.punch.ban .ind b,.lcd .ind b.warn{color:#ff9c83}
+.daybar{position:relative;height:5px;border-radius:9px;background:#ffffff1f;margin:2px 2px 0}
+.daybar i{position:absolute;left:0;top:0;bottom:0;border-radius:9px;background:var(--lcdOn);transition:width .12s linear}
+.punch.ot .daybar i{background:var(--amber)} .punch.late .daybar i,.punch.ban .daybar i{background:#ff9c83}
+.daybar b{position:absolute;top:-3px;width:2px;height:11px;background:#fff;border-radius:2px}
+.dayrow{position:relative;height:13px;font-size:10px;color:#cfd6d8}
+.dayrow span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.side{width:88px;flex:none;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
+.menu2{height:34px;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--paper);border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 3px 0 #c9bfa8}
+.menu2 i{font-style:normal;font-size:15px;line-height:1}
+.faces{display:flex;justify-content:center;background:#0003;border-radius:99px;padding:3px}
+.faces img{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:50% 12%;background:#c3d1c6;border:2px solid var(--paper);margin-right:-7px}
+.faces img:last-child{margin-right:0}
+
+/* ---------- 办公室 ---------- */
+.scene{position:relative;flex:1 1 auto!important;min-height:140px}
+.scene canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.state{position:absolute;right:12px;bottom:4px;font-size:12px;font-weight:700;background:var(--paper);padding:3px 10px;border-radius:99px;box-shadow:0 2px 0 #0003}
+
+/* ---------- 信息区：文件夹 / 效率卡+便利贴 / 竖温度计 ---------- */
+.info{display:grid;grid-template-columns:1fr 62px;grid-template-rows:auto auto;gap:12px 10px;margin:12px 12px 8px}
+.folder{position:relative;background:var(--manila);border-radius:0 10px 10px 10px;padding:9px 12px 9px;box-shadow:0 3px 0 var(--manilaDk)}
+.folder::before{content:"项目";position:absolute;top:-18px;left:0;height:19px;padding:0 14px;background:var(--manila);border-radius:7px 7px 0 0;font-size:11px;font-weight:700;color:var(--manilaInk);line-height:20px}
+.folder .hd{display:flex;justify-content:space-between;align-items:baseline}
+.folder .big{font-size:24px;font-weight:900;color:#3b2f12}
+.folder .big small{font-size:12px;font-weight:500;color:var(--manilaInk)}
+.folder .due{font-size:12px;color:var(--manilaInk)}
+.folder .due b{font-size:15px;color:var(--red)}
+.grid26{display:grid;grid-template-columns:repeat(13,1fr);gap:3px;margin-top:6px}
+.grid26 i{aspect-ratio:1.25;border-radius:3px;background:#fff9;position:relative;overflow:hidden}
+.grid26 i.on{background:var(--green)}
+.grid26 i .p{position:absolute;left:0;top:0;bottom:0;background:var(--green)}
+.grid26 i .d{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(-45deg,#e08a2c 0 3px,#f3c27b 3px 6px)}
+.folder .lg{font-size:11px;color:var(--manilaInk);margin-top:6px;display:flex;justify-content:space-between;gap:8px}
+.folder .lg b{color:#a85512}
+.lower{display:flex;gap:10px;align-items:stretch}
+.eff{flex:1;min-width:0;background:var(--paper);border-radius:10px;box-shadow:0 2px 0 #0003;padding:8px 10px;display:flex;flex-direction:column;gap:5px}
+.eff .eh{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--mute)}
+.eff .eh b{font-size:22px;line-height:1}
+.ebar{height:6px;border-radius:9px;background:#e6ddc9;overflow:hidden}
+.ebar i{display:block;height:100%;border-radius:9px}
+.eff ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.eff li{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#5f6669;line-height:1.45}
+.eff li span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eff li em{font-style:normal;font-weight:700;color:var(--green);white-space:nowrap}
+.eff li em.neg{color:var(--red)}
+.tipnote{position:relative;width:118px;min-height:92px;flex:none;align-self:center;background:linear-gradient(170deg,#fff0a6,#ffe27a 70%,#f2cf5f);padding:16px 11px 10px;
+  transform:rotate(2deg);color:#4a3d10;box-shadow:2px 6px 8px -2px #0005;clip-path:polygon(0 0,100% 0,100% 84%,88% 100%,0 100%)}
+.tipnote::before{content:"";position:absolute;top:4px;left:50%;width:13px;height:13px;margin-left:-6px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ff8a7a,#c8463a);box-shadow:0 2px 2px #0005}
+.tipnote::after{content:"";position:absolute;right:0;bottom:0;width:12%;height:16%;background:linear-gradient(315deg,transparent 48%,#d8b74e 50%,#f6e08f)}
+.tipnote b{display:block;font-family:var(--hand);font-weight:400;font-size:19px;line-height:1.2}
+.tipnote span{display:block;font-size:11px;opacity:.78;margin-top:4px;line-height:1.35}
+.tipnote.alert{background:linear-gradient(170deg,#ffd6c8,#ffb9a6 70%,#f2a08a);color:#5a1a0e}
+.thermo{grid-column:2;grid-row:1/3;background:var(--paper);border-radius:12px;box-shadow:0 2px 0 #0003;display:flex;flex-direction:column;align-items:center;padding:9px 0 10px;gap:2px}
+.thermo .k{font-size:11px;color:var(--mute)}
+.thermo b{font-size:24px;line-height:1.1}
+.thermo em{font-style:normal;font-size:11px;font-weight:700;margin-bottom:6px;text-align:center;line-height:1.25}
+.thermo .gl{flex:1;display:flex;flex-direction:column;align-items:center;min-height:30px}
+.thermo .tube{position:relative;flex:1;width:12px;border-radius:9px 9px 0 0;background:#e6ddc9;margin-bottom:-6px}
+.thermo .tube i{position:absolute;left:0;right:0;bottom:0;border-radius:9px 9px 0 0;transition:height .3s}
+.thermo .tube::after{content:"";position:absolute;left:16px;top:6px;bottom:8px;width:5px;background:repeating-linear-gradient(#0003 0 1px,transparent 1px 10px)}
+.thermo .bulb{width:26px;height:26px;flex:none;border-radius:50%;border:3px solid var(--paper);box-shadow:0 0 0 1px #e6ddc9;position:relative}
+
+/* ---------- 操作区 ---------- */
+.dock{padding:4px 12px 14px;display:flex;flex-direction:column;gap:9px}
+.drow{position:relative;display:flex;gap:10px}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cb.work{flex:1;height:70px;padding:10px 16px}
+.cb.work .ico{font-size:30px} .cb.work span{font-size:26px}
+.dur{position:absolute;left:calc(100% - 122px - 10px - 72px);top:9px;font-size:12px;font-weight:700;background:#ffffffb8;border-radius:99px;padding:4px 10px;color:#1d5a4b;z-index:2}
+.cb.off2{width:122px;height:70px;padding:10px 12px}
+.cb.off2 .ico{font-size:28px} .cb.off2 span{font-size:24px}
+.trio .cb{height:54px}
+.cb.run{flex:1;height:70px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;overflow:hidden;text-align:center}
+.cb.run .fill{position:absolute;inset:0 auto 0 0;background:#2f7d6b2e;transition:width .12s linear}
+.cb.run span,.cb.run small{position:relative}
+.cb.run span{font-size:20px}
+.lockline{height:54px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#cfe5de;border-radius:14px;border:2px dashed #ffffff2e}
+
+/* ---------- 纸张类弹层 ---------- */
+.dim{position:absolute;inset:0;background:#0b1a1666;z-index:15;animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.memo{position:absolute;left:10px;right:10px;bottom:0;z-index:20;background:var(--paper);padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 -8px 24px #0007;border-radius:4px 4px 0 0;animation:up .28s ease-out;max-height:84%;overflow:auto}
+.memo::before{content:"";position:absolute;left:0;right:0;top:-8px;height:8px;background:linear-gradient(135deg,transparent 33%,var(--paper) 33% 66%,transparent 66%) 0 0/12px 8px}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.memo .mh{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--mute);letter-spacing:.12em;border-bottom:2px solid #2d343722;padding-bottom:6px}
+.memo h3{margin:4px 0 8px;font-size:19px;font-weight:900}
+.stamp{font-family:var(--hand);font-size:16px;color:var(--red);border:2.5px solid var(--red);border-radius:6px;padding:0 6px;transform:rotate(-8deg);opacity:.9;letter-spacing:0}
+.who{display:flex;gap:12px;align-items:flex-start;margin:12px 0 8px}
+.polaroid{background:#fff;padding:4px 4px 12px;box-shadow:0 3px 6px #0003;transform:rotate(-3deg);flex:none;position:relative}
+.polaroid::after{content:"";position:absolute;top:-8px;right:10px;width:9px;height:24px;border:2px solid #8f989b;border-radius:6px;transform:rotate(12deg)}
+.polaroid img,.polaroid .ava{width:68px;height:76px;object-fit:cover;object-position:50% 10%;background:#c3d1c6;display:block}
+.polaroid .ava{display:grid;place-items:center;font-size:30px;font-weight:900;color:var(--paper);background:#4f6a70}
+.who .name{font-size:12px;color:var(--mute)}
+.who .say{font-family:var(--hand);font-size:20px;line-height:1.35;margin-top:2px}
+.memo p{margin:0 0 8px;font-size:13.5px;line-height:1.65;color:#4b5356}
+.opts{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.check{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 12px 12px 14px;background:#fff;border:2px solid #2d343726;border-radius:14px;
+  box-shadow:0 4px 0 #d6cdb6;font-size:15.5px;font-weight:800;color:var(--paperInk);line-height:1.35}
+.check::before{content:"";width:20px;height:20px;border:2.5px solid #2d3437;border-radius:5px;flex:none;background:#fff}
+.check::after{content:"›";font-size:24px;line-height:1;color:#2d343766;margin-left:2px}
+.check small{margin-left:auto;font-size:12px;font-weight:500;color:#6c7275;text-align:right;line-height:1.4;white-space:nowrap}
+.check.rec{background:#e6f6ef;border-color:#2f7d6b55;box-shadow:0 4px 0 #b5dccd}
+.check.rec small{color:var(--green);font-weight:700}
+.check.bad small{color:#b0503c}
+.check:active{transform:translateY(3px);box-shadow:0 1px 0 #d6cdb6}
+.memo .fine{font-size:11px;color:#8a8f91;margin-top:10px;text-align:center}
+.memo.hr .stamp{font-family:var(--sans);font-size:13px;font-weight:900}
+/* 下班小票 */
+.receipt{position:absolute;left:28px;right:28px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:20;background:#fbf8f0;padding:18px 18px 22px;box-shadow:0 10px 30px #0008;animation:up .28s ease-out}
+.receipt::after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:8px;background:linear-gradient(45deg,transparent 33%,#fbf8f0 33% 66%,transparent 66%) 0 0/12px 8px}
+.receipt h3{margin:0;text-align:center;font-size:17px;font-weight:900;letter-spacing:.1em}
+.receipt .sub{text-align:center;font-size:11px;color:var(--mute);margin:2px 0 10px}
+.receipt .ln{display:flex;justify-content:space-between;font-size:14px;padding:6px 0;border-top:1px dashed #2d343733}
+.receipt .ln b{font-variant-numeric:tabular-nums}
+.receipt .ln b.pos{color:var(--green)} .receipt .ln b.neg{color:var(--red)}
+.receipt .warn{margin:8px 0 2px;font-size:12.5px;font-weight:700;color:var(--red);text-align:center}
+.receipt .cb{margin-top:14px;width:100%}
+/* 全屏纸页（晨报、菜单类） */
+.full{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;gap:12px;overflow:auto;animation:fade .2s;
+  background:radial-gradient(120% 80% at 50% 30%,var(--matHi),var(--mat));padding:calc(16px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px))}
+.full>*{flex:none}
+.full h2{margin:0;color:var(--paper);font-size:22px;font-weight:900}
+.full .sub{color:#cfe5de;font-size:12.5px;margin-top:-6px;line-height:1.5}
+.sheet{background:var(--paper);border-radius:12px;padding:12px 14px;box-shadow:0 3px 0 #0003}
+.mhead{display:flex;gap:12px;align-items:center}
+.mhead .cal{width:66px}
+.mhead .cal .cd{font-size:30px}
+.mhead h2{font-size:24px}
+.buff{border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 3px 0 #0003}
+.buff.pos{background:#d9f2e8;color:#1e5c4d} .buff.neg{background:#f8ddd2;color:#8a2b20}
+.buff .ico{font-size:36px}
+.buff b{font-size:24px;font-weight:900;display:block;line-height:1.15}
+.buff span{font-size:12px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.steps div{background:var(--paper);border-radius:10px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;box-shadow:0 2px 0 #0003}
+.steps .ico{font-size:26px;color:var(--green)}
+.steps b{font-size:14px}
+.steps span{font-size:11px;color:var(--mute);line-height:1.4}
+.today{display:flex;flex-direction:column;gap:7px}
+.today>div{display:flex;gap:10px;align-items:center;background:var(--paper);border-radius:10px;padding:8px 12px;box-shadow:0 2px 0 #0003}
+.today img{width:38px;height:42px;object-fit:cover;object-position:50% 10%;border-radius:6px;background:#c3d1c6;flex:none}
+.today .ico{font-size:24px;color:var(--orange);flex:none;margin:0 7px}
+.today b{display:block;font-size:14px}
+.today span{font-size:12px;color:#5f6669;line-height:1.45}
+.today .red .ico,.today .red b{color:var(--red)}
+.mrow{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
+.mrow small{display:block;font-size:11.5px;color:var(--mute)}
+.tog{padding:6px 14px;border-radius:99px;background:var(--green);color:#fff;font-size:13px;font-weight:700;flex:none}
+.tog[aria-pressed=false]{background:#2d343722;color:var(--paperInk)}
+.list{display:flex;flex-direction:column;gap:10px}
+/* 工牌 */
+.ids{flex:1 1 auto!important;min-height:0;display:flex;flex-direction:column;gap:10px}
+.idcard{flex:1 1 0;min-height:112px;display:flex;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 0 #0003;position:relative}
+.idcard::before{content:"";position:absolute;top:8px;left:50%;width:34px;height:6px;margin-left:-17px;border-radius:4px;background:var(--mat)}
+.idcard .stripe{width:8px;flex:none;background:var(--red)}
+.idcard:nth-child(2) .stripe{background:#e08a2c} .idcard:nth-child(3) .stripe{background:var(--green)}
+.idcard .ph{width:30%;max-width:140px;flex:none;margin:20px 0 12px 10px;background:#c3d1c6;border-radius:6px;overflow:hidden}
+.idcard .ph img{width:100%;height:100%;object-fit:cover;object-position:50% 15%}
+.idcard .tx{flex:1;min-width:0;padding:22px 12px 10px;display:flex;flex-direction:column;gap:3px}
+.idcard .co{font-size:9.5px;letter-spacing:.15em;color:#9aa0a2}
+.idcard .nm{font-size:18px;font-weight:900}
+.idcard .q{font-family:var(--hand);font-size:15.5px;line-height:1.35}
+.idcard .ef{font-size:11.5px;color:#5f6669;border-top:1px solid #0001;padding-top:4px;margin-top:auto;line-height:1.45}
+.seedline{font-size:11.5px;color:#cfe5de;text-align:center}
+.catalog{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mini{background:#fff;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 3px 0 #0003}
+.mini .pic{background:#c3d1c6;height:120px;display:flex;justify-content:center}
+.mini .pic img{height:100%;width:auto;max-width:none}
+.mini b{padding:6px 10px 0;font-size:15px}
+.mini q{font-family:var(--hand);font-size:14px;padding:2px 10px 4px;line-height:1.4;quotes:"“" "”"}
+.mini span{font-size:11px;color:#5f6669;padding:0 10px 10px;line-height:1.45}
+table.ledger{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.ledger th{font-weight:500;color:var(--mute);text-align:right;padding:4px 6px;font-size:12px}
+.ledger td{text-align:right;padding:6px;border-top:1px dashed #2d343733}
+.ledger th:first-child,.ledger td:first-child{text-align:left}
+/* 标题与结局 */
+.title{flex:1 1 auto!important;display:flex;flex-direction:column;padding:18px 18px 20px;gap:12px;overflow:auto}
+.title>*{flex:none}
+.title .hero{position:relative;margin:0 -18px;flex:1 1 auto;min-height:200px}
+.title .hero canvas{position:absolute;inset:0;width:100%;height:100%}
+.title h1{margin:0;font-family:var(--hand);font-weight:400;font-size:46px;line-height:1.1;color:var(--paper);letter-spacing:.04em}
+.title .en{margin-top:-8px;font-size:11px;font-weight:700;letter-spacing:.32em;color:#cfe5de99}
+.title .tagline{align-self:flex-start;font-family:var(--hand);font-size:22px;line-height:1.35;background:var(--note);color:#4a3d10;padding:10px 14px 12px;transform:rotate(-1.5deg);box-shadow:0 4px 8px #0004}
+.title p{margin:0;color:#cfe5de;font-size:13.5px;line-height:1.7}
+.title .btns{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+.title .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.title .row2 .cb{height:48px}
+.ver{font-size:11px;color:#cfe5de99;text-align:center}
+.ending .cert{background:var(--paper);border-radius:6px;padding:20px 18px;box-shadow:0 4px 0 #0003;position:relative}
+.ending .cert h2{color:var(--paperInk);font-size:30px}
+.ending .cert h2.win{color:var(--green)}
+.ending .cert .stamp{position:absolute;right:16px;top:16px;font-size:20px;padding:2px 10px}
+.ending .cert p{margin:8px 0 12px;font-size:14px;line-height:1.7;color:#4b5356}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="screen"></div>
+  <div id="layer"></div>
+  <div id="toast" aria-live="polite"></div>
+</div>
+<script src="rules.js"></script>
+<script src="logic.js"></script>
+<script>
+(function(){
+'use strict';
+const L=OvertimeLogic, RULES=window.OVERTIME_RULES, game=L.createGame(RULES);
+const SAVE_KEY='overtime.mobile.v1', PLAYBACK=4, VERSION='网页版 0.14';
+const $=id=>document.getElementById(id);
+const screen=$('screen'), layer=$('layer'), toastBox=$('toast');
+
+/* ---------------------------------------------------------------- 图标 */
+const SVG={
+  work:'<path d="M6 3h9l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M9 11h7M9 15h5" stroke="currentColor" stroke-width="2.2"/>',
+  rest:'<path d="M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z M16 11h2a2 2 0 0 1 0 4h-2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M8 3c0 2 2 2 2 4M12 3c0 2 2 2 2 4" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+  submit:'<path d="M12 15V3M7 8l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M3 14v6h18v-6" fill="none" stroke="currentColor" stroke-width="2.2"/>',
+  card:'<rect x="5" y="3" width="14" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M9 8h6M9 12h6" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="17" r="1.6" fill="currentColor"/>',
+  up:'<path d="M12 20V5M5 11l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.6"/>',
+  down:'<path d="M12 4v15M5 13l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.6"/>',
+  clock:'<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2"/>',
+  alert:'<path d="M12 3l10 18H2z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 10v5M12 17v2" stroke="currentColor" stroke-width="2"/>',
+  rec:'<path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2.2"/>',
+  done:'<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7.5 12.5l3 3 6-6.5" fill="none" stroke="currentColor" stroke-width="2.4"/>',
+  fast:'<path d="M4 6l7 6-7 6zM12 6l7 6-7 6z" fill="currentColor"/>',
+  stop:'<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>'
+};
+const ic=k=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${SVG[k]||SVG.alert}</svg>`;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pts=v=>(v/1000).toFixed(1), pti=v=>Math.floor(v/1000+1e-9);
+const ASSET_V='cbb8eede';  // build.py 按图片内容写入，换图后浏览器不会用旧缓存
+const pic=id=>'img/'+id+'.webp?v='+ASSET_V;
+const clock=L.clock, endTime=L.endTime;
+
+/* 七段数码管时钟：用 SVG 画，不依赖字体（以后搬去 canvas 也是同一套线段） */
+const SEGS={0:'abcdef',1:'bc',2:'abged',3:'abgcd',4:'fgbc',5:'afgcd',6:'afgedc',7:'abc',8:'abcdefg',9:'abcdfg'};
+// 每个数字格 14×26，线段写死成多边形
+const SEGPOLY={a:[[1.8,0],[12.2,0],[9.8,3.2],[4.2,3.2]],d:[[1.8,26],[12.2,26],[9.8,22.8],[4.2,22.8]],
+  g:[[2.4,13],[4.2,11.4],[9.8,11.4],[11.6,13],[9.8,14.6],[4.2,14.6]],
+  f:[[0,1.6],[3.2,4.6],[3.2,11],[0,12.4]],b:[[14,1.6],[14,12.4],[10.8,11],[10.8,4.6]],
+  e:[[0,13.6],[3.2,15],[3.2,21.4],[0,24.4]],c:[[14,13.6],[14,24.4],[10.8,21.4],[10.8,15]]};
+const segPath=(k,x)=>'M'+SEGPOLY[k].map(([px,py])=>(px+x)+','+py).join('L')+'Z';
+function lcdSVG(str){
+  let x=0,out='';
+  for(const ch of str){
+    if(ch===':'){out+=`<rect class="seg" x="${x+1}" y="7" width="3.2" height="3.2"/><rect class="seg" x="${x+1}" y="16" width="3.2" height="3.2"/>`;x+=7;continue}
+    const on=SEGS[ch]||'';
+    for(const k of 'abcdefg')out+=`<path class="${on.includes(k)?'seg':'segOff'}" d="${segPath(k,x)}"/>`;
+    x+=18;
+  }
+  return `<svg viewBox="-1 -1 ${x} 28" aria-label="${str}">${out}</svg>`;
+}
+
+/* ---------------------------------------------------------------- 界面状态（不进存档） */
+const ui={view:'title',overlay:null,intro:false,tutShown:null,paused:true,fast:false,dur:30,useEv:true,elapsed:0,seenNotes:0,lastSave:0};
+function load(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}}
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+const prefs=load('overtime.mobile.prefs',{dur:30,useEv:true});
+ui.dur=[15,30,60,120].includes(prefs.dur)?prefs.dur:30; ui.useEv=prefs.useEv!==false;
+const savePrefs=()=>store('overtime.mobile.prefs',{dur:ui.dur,useEv:ui.useEv});
+const tutSeen=new Set(load('overtime.mobile.tut',[]));
+const saveTut=()=>store('overtime.mobile.tut',[...tutSeen]);
+// 新手引导：按顺序找第一条“条件成立且没看过”的；k 是要点的按钮（null 表示只是说明，做任意操作后算看过）
+const TUT=[
+  {id:'work',  when:s=>!s.tutorial_worked, b:'先点工作！', d:'干活会做出草稿。右上角能切时长。', k:'work'},
+  {id:'submit',when:s=>s.draft>0&&!s.tutorial_submitted, b:'把草稿交了', d:'交了才算进度，没交的下班会丢。', k:'submit'},
+  {id:'grid',  when:s=>s.tutorial_submitted, b:'涂满26格就赢', d:'文件夹里一格100点，30天内交满。', k:null},
+  {id:'rec',   when:s=>s.evidence>0, b:'聊天记录很有用', d:'领导刁难时拿出来，省时间、保草稿。', k:null},
+  {id:'eff',   when:s=>s.fatigue>=40, b:'累了干得慢', d:'看左边的产出效率。休息能降压力。', k:'rest'},
+  {id:'home',  when:s=>s.minute>=game.earliestDeparture()&&!s.sealed, b:'可以下班了', d:'点下班，会先帮你交草稿。', k:'home'},
+];
+function tutTip(s){
+  if(s.phase!=='idle'||s.sealed)return null;
+  for(const t of TUT)if(!tutSeen.has(t.id)&&t.when(s))return t;
+  return null;
+}
+function tutAfter(a){
+  const s=game.s;if(!s||!s.day)return;
+  for(const t of TUT){if(tutSeen.has(t.id))continue;
+    // 条件已经过去（比如已经工作过）或者玩家做了它要的操作
+    if((t.id==='work'&&s.tutorial_worked)||(t.id==='submit'&&s.tutorial_submitted)||t.k===a){tutSeen.add(t.id)}}
+  const cur=ui.tutShown;if(cur&&!cur.k&&['work','rest','evidence','submit','home'].includes(a))tutSeen.add(cur.id);
+  saveTut();
+}
+const HAND='<i class="hand" aria-hidden="true"><svg viewBox="0 0 28 36"><rect x="4" y="11" width="20" height="17" rx="6" fill="#fff" stroke="#2d3437" stroke-width="1.8"/><path d="M17.5 11.5v4M21 13v4" stroke="#2d3437" stroke-width="1.6" stroke-linecap="round"/><rect x="9.5" y="1" width="7" height="17" rx="3.5" fill="#fff" stroke="#2d3437" stroke-width="1.8"/><rect x="6" y="27" width="16" height="8" rx="2" fill="#8fdcc6" stroke="#2d3437" stroke-width="1.8"/></svg></i>';
+function hasSave(){try{return !!localStorage.getItem(SAVE_KEY)}catch(e){return false}}
+function persist(){if(game.s&&game.s.day){store(SAVE_KEY,game.s);ui.lastSave=performance.now()}}
+
+/* ---------------------------------------------------------------- 提示 */
+function toast(msg,ms){
+  const d=document.createElement('div');d.textContent=msg;toastBox.appendChild(d);
+  while(toastBox.children.length>2)toastBox.firstChild.remove();
+  setTimeout(()=>d.remove(),ms||2200);
+}
+const NOTABLE=/损失|抵消|急件|叫住|打扫|人事|停机|禁止|晨会|至少收|还不能下班|领导已更换/;
+function flushNotes(){
+  const h=game.s.history||[];
+  for(let i=ui.seenNotes;i<h.length;i++) if(NOTABLE.test(h[i].text)&&ui.view==='play') toast(h[i].text.replace(/。$/,''));
+  ui.seenNotes=h.length;
+}
+
+/* ---------------------------------------------------------------- 办公室画面（canvas，可直接搬去小游戏） */
+const office={imgs:{}};
+['day','sunset','night'].forEach(n=>{office.imgs[n]=new Image()});
+office.imgs.day.onload=()=>{office.imgs.sunset.src='img/office_sunset.webp?v='+ASSET_V;office.imgs.night.src='img/office_night.webp?v='+ASSET_V};
+office.imgs.day.src='img/office_day.webp?v='+ASSET_V;
+function lighting(minute){
+  if(minute<=900)return[1,0,0];
+  if(minute<=1110){const t=(minute-900)/210;return[1-t,t,0]}
+  const t=Math.min(1,Math.max(0,(minute-1110)/120));return[0,1-t,t];
+}
+function drawOffice(cv,minute,row,frame){
+  const dpr=Math.min(3,window.devicePixelRatio||1),w=cv.clientWidth,h=cv.clientHeight;
+  if(!w||!h)return;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+  const c=cv.getContext('2d'),W=cv.width,H=cv.height,wt=lighting(minute);
+  c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
+  c.clearRect(0,0,W,H);
+  // 帧 960×600，办公室实际占 x 7.8%—90%、y 6.3%—89.8%：裁到贴边，内容中心对齐画布中心（水平、垂直都居中）
+  const FW=960,FH=600,scale=Math.min(W/(FW*0.86),H/(FH*0.87));
+  const dw=FW*scale,dh=FH*scale,dx=W/2-0.489*dw,dy=H/2-0.481*dh;
+  const sh=c.createRadialGradient(W/2,dy+0.86*dh,0,W/2,dy+0.86*dh,dw*0.44);
+  sh.addColorStop(0,'rgba(0,0,0,.3)');sh.addColorStop(1,'rgba(0,0,0,0)');
+  c.save();c.translate(0,dy+0.86*dh);c.scale(1,.2);c.translate(0,-(dy+0.86*dh));c.fillStyle=sh;c.fillRect(0,0,W,H*4);c.restore();
+  const alphas=[1,wt[1]/Math.max(wt[0]+wt[1],.001),wt[2]];
+  ['day','sunset','night'].forEach((n,i)=>{const im=office.imgs[n];if(!im.complete||!im.naturalWidth||alphas[i]<=0)return;
+    c.globalAlpha=alphas[i];c.drawImage(im,frame*FW,row*FH,FW,FH,dx,dy,dw,dh)});
+  c.globalAlpha=1;
+}
+
+/* ---------------------------------------------------------------- 规则→界面 的小推导 */
+function phaseOf(s){
+  if(game.overtimeBlocked())return{c:'ban',tag:'HR · 18点走'};
+  if(s.minute<1080)return{c:'',tag:''};
+  if(s.minute<=1320)return{c:'ot',tag:'加班中'};
+  return{c:'late',tag:'晚归'};
+}
+// 产出效率：压力与加班 × 今日环境 × 领导效果；逐项列出
+function effInfo(s){
+  const base=game.efficiency(),ot=s.minute>=1080,rows=[];
+  rows.push({t:'压力和加班',v:Math.round(base*100)+'%',neg:base<.7});
+  if(!L.workday(s.day)||s.sealed)return{total:base,rows};
+  if(game.mentoring())rows.push({t:'贴身带教',v:'−75%',neg:true},{t:'带教 · 压力',v:'+2/时',neg:true});
+  else{const ch=Math.round((s.rate-1)*100);rows.push({t:'今日 · '+L.RATE_NAMES[s.rate_index],v:(ch>=0?'+':'−')+Math.abs(ch)+'%',neg:ch<0})}
+  if(game.hasTrait('leader_06')&&s.pressure&&!s.pressure_waived)rows.push({t:'慈善家训话',v:'−30%',neg:true});
+  if(game.hasTrait('leader_16')&&ot)rows.push({t:'烧饼摊主 · 加班',v:'+5%',neg:false});
+  if(s.extra_fatigue>0)rows.push({t:'忽略群聊 · 压力',v:'+2/时',neg:true});
+  return{total:base*s.rate*game.productionMultiplier(ot),rows};
+}
+function guide(s){
+  if(s.phase==='choice')return null;
+  if(s.sealed)return{b:'项目交完了！',d:'这个月，你赢了。',k:'done'};
+  if(s.phase==='running')return ui.paused?{b:'暂停中',d:'点进度条继续。',k:'clock'}:{b:'干活中…',d:'遇到事件会停下。',k:'clock'};
+  const sub=game.submitMinutes(ui.useEv),finish=endTime(s.minute,sub),shut=game.shutdownTime();
+  if(s.draft>0&&finish>shut)return{b:'来不及交了',d:'没交的草稿下班会丢。',k:'alert'};
+  if(s.draft>0&&(game.projectRemaining()===0||!s.tutorial_submitted||finish+30>=shut)){
+    if(game.submissionBlock()!=='')return{b:'再做一点',d:'果树农民每次至少收30点。',k:'work'};
+    return{b:'先把草稿交了！',d:'提交了，进度才会涨。',k:'submit'};
+  }
+  if(s.fatigue>=40&&endTime(s.minute,30)<=shut)return{b:'歇一会儿吧',d:`休息30分钟，压力−${game.restRecovery()}。`,k:'rest'};
+  if(s.minute>=shut-30)return{b:'准备下班',d:'时间不多了。',k:'clock'};
+  if(!s.tutorial_worked)return{b:'先干活！',d:'点工作，做出第一份草稿。',k:'work'};
+  if(s.minute>=game.earliestDeparture()&&s.draft===0)return{b:'可以下班了',d:'越晚走，明早恢复越少。',k:'home'};
+  return{b:'继续干活',d:'做出草稿，记得留时间提交。',k:'work'};
+}
+function controls(s){
+  const idle=game.canAct(),shut=game.shutdownTime();
+  const sub=game.submitMinutes(ui.useEv),finish=endTime(s.minute,s.draft>0?sub:0),block=game.submissionBlock();
+  const validSubmit=s.draft>0&&block===''&&finish<=shut;
+  const busyWhy=s.phase==='choice'?'先回应事件。':s.phase==='running'?'先做完或停下当前安排。':'';
+  const late=`${clock(shut)}强制下班，时间不够了。`;
+  const c={};
+  c.work=idle&&game.projectRemaining()>0&&!s.sealed?'':(busyWhy||(s.sealed?'项目已经交完了。':'草稿已经够了，提交就能过关。'));
+  c.rest=idle&&endTime(s.minute,30)<=shut?'':(busyWhy||'离强制下班不到30分钟，来不及休息。');
+  c.evidence=idle&&s.evidence<3&&s.crafted<2&&endTime(s.minute,game.evidenceMinutes())<=shut?'':
+    (busyWhy||(s.evidence>=3?'记录已满，最多3份。':s.crafted>=2?'今天已存2份，明天再存。':late));
+  c.submit=idle&&validSubmit?'':(busyWhy||(s.draft<=0?'还没有草稿，先工作。':block||late));
+  c.discard=s.draft>0&&s.minute>=game.earliestDeparture()&&(finish+game.departureDelay()>shut||block!=='');
+  c.home=idle&&(s.draft===0||validSubmit)&&finish+game.departureDelay()<=shut?'':(busyWhy||(c.discard?'':late));
+  c.subMin=sub; c.waived=game.submissionWaiver(ui.useEv);
+  return c;
+}
+const lvlColor=f=>f<40?'#2f9d7f':f<70?'#e8a24a':'#e0573f';
+const lvlWord=f=>f<40?'扛得住':f<70?'有点累':'吃不消';
+
+/* ---------------------------------------------------------------- 渲染：分块对比字符串，变了才写 DOM */
+const parts={};
+function put(id,html){const el=parts[id];if(el&&el._h!==html){el.innerHTML=html;el._h=html}}
+function setScreen(kind,html){
+  if(screen._kind!==kind){screen.innerHTML=html;screen._kind=kind;for(const k in parts)delete parts[k];
+    screen.querySelectorAll('[data-part]').forEach(el=>{parts[el.dataset.part]=el;el._h=null});}
+}
+function render(){
+  const s=game.s;
+  if(ui.view==='title'){titleView();layerView(ui.overlay==='help'?overlayHTML():'');return}
+  if(s.phase==='ending'){endingView();layerView(overlayHTML());return}
+  if(ui.intro||(s.phase==='morning'&&s.week_changed)){cardsView();layerView(overlayHTML());return}
+  playView();
+  layerView(overlayHTML()||phaseSheet());
+}
+function layerView(html){if(layer._h!==html){layer.innerHTML=html;layer._h=html}}
+
+function titleView(){
+  setScreen('title',`<div class="title">
+    <h1>今天也加班</h1><div class="en">OVERTIME MASTER</div>
+    <div class="hero"><canvas id="heroCv"></canvas></div>
+    <div class="tagline">领导催，同事坑，<br>项目还得你来扛。</div>
+    <p>你是一名打工仔。面对领导的刁难、奇葩同事的骚操作，能否见招拆招，在月底前交出项目？</p>
+    <div class="btns">
+      <button class="cb mint wide" data-a="new">${ic('work')}<span>开始一个月</span></button>
+      <div class="row2"><button class="cb wide ${hasSave()?'':'off'}" data-a="continue"><span>继续上次</span></button><button class="cb wide" data-a="help"><span>怎么玩</span></button></div>
+      <div class="ver">${VERSION} · 进度保存在这个浏览器</div>
+    </div></div>`);
+}
+
+function idHTML(id){
+  const d=game.leaderData(id);
+  return `<article class="idcard"><div class="stripe"></div><div class="ph"><img src="${pic(id)}" alt="${esc(d.name)}"></div>
+    <div class="tx"><span class="co">加班有限公司 · 工牌</span><span class="nm">${esc(d.name)}</span><span class="q">“${esc(d.quote)}”</span><span class="ef">${esc(d.summary)}</span></div></article>`;
+}
+function cardsView(){
+  const s=game.s,first=ui.intro,key='cards'+s.leader_week+first+s.seed;
+  if(screen._kind===key)return;
+  const range=`第${1+(s.leader_week-1)*7}—${Math.min(30,s.leader_week*7)}天生效`;
+  setScreen(key,`<div class="full" style="position:relative;flex:1 1 auto">
+    <h2>${first?'这周的三位领导':`第${s.leader_week}周 · 领导又换了`}</h2>
+    <div class="sub">${first?'三张同时生效，每周一换人。毕竟，你无法掌控人生！':range+' · 上周的影响已经结束'}</div>
+    <div class="ids">${s.traits.map(idHTML).join('')}</div>
+    ${first?`<div class="seedline">复盘编号 ${s.seed}</div>`:''}
+    <button class="cb mint wide" data-a="${first?'accept':'weekAck'}"><span>${first?'带着这三张，开始第1天':'接受现实，看看今天'}</span></button>
+  </div>`);
+}
+
+function playView(){
+  const s=game.s;
+  setScreen('play',`<div class="hud" data-part="hud"></div>
+    <div class="scene"><canvas id="cv"></canvas><div data-part="sceneUI"></div></div>
+    <div class="info" data-part="info"></div><div class="dock" data-part="dock"></div>`);
+  const ph=phaseOf(s),shut=game.shutdownTime(),pct=m=>Math.max(0,Math.min(100,(m-540)/(shut-540)*100)),ed=game.earliestDeparture();
+  const warnOT=!game.overtimeBlocked()&&s.month>=1800;
+  const indL=ph.tag||'上班中',indR=warnOT?`<b class="warn">本月 ${(s.month/60).toFixed(1)}/45h</b>`:'<span>考勤</span>';
+  put('hud',`<div class="cal"><div class="ch">${L.WEEKDAYS[(s.day-1)%7]}</div><div class="cd">${s.day}</div><div class="ct">/ 30 天</div></div>
+    <div class="punch ${ph.c}"><div class="lcd"><div class="ind"><b>${indL}</b>${indR}</div>${lcdSVG(clock(s.minute).padStart(5,'0'))}</div>
+      <div class="daybar"><i style="width:${pct(s.minute)}%"></i><b style="left:${pct(ed)}%"></b></div>
+      <div class="dayrow"><span style="left:${Math.min(80,pct(ed))}%">${clock(ed)} 下班</span></div></div>
+    <div class="side"><button class="menu2" data-a="menu"><i>≡</i>菜单</button>
+      <button class="faces" data-a="traits" aria-label="本周领导">${s.traits.map(id=>`<img src="${pic(id)}" alt="">`).join('')}</button></div>`);
+  const run=s.phase==='running'&&s.jobs[0];
+  put('sceneUI',run?`<span class="state">${ui.paused?'已暂停':game.actionName(run.kind)+'中…'}</span>`:'');
+  // 文件夹：26 格，一格 100 点；已交实心、草稿斜纹（按比例画进格子）
+  const cells=[];for(let i=0;i<26;i++){const lo=i*100000,f=Math.max(0,Math.min(1,(s.formal-lo)/100000)),d=Math.max(0,Math.min(1,(s.formal+s.draft-lo)/100000))-f;
+    cells.push(f>=1?'<i class="on"></i>':`<i>${f>0?`<span class="p" style="width:${f*100}%"></span>`:''}${d>0?`<span class="d" style="left:${f*100}%;width:${d*100}%"></span>`:''}</i>`)}
+  const E=effInfo(s),tot=Math.round(E.total*100),ec=E.total>=.7?'#2f7d6b':E.total>=.4?'#c87a1a':'#c8463a';
+  const g0=guide(s),tip=g0&&g0.k==='alert'?null:tutTip(s);ui.tutShown=tip;
+  const g=tip?{b:tip.b,d:tip.d,k:tip.k||'',tut:true}:g0,col=lvlColor(s.fatigue);
+  put('info',`<div class="folder">
+      <div class="hd"><span class="big tnum">${pti(s.formal)}<small> / 2600 点</small></span><span class="due">还剩 <b>${30-s.day}</b> 天</span></div>
+      <div class="grid26">${cells.join('')}</div>
+      <div class="lg"><span>一格 100 点 · 已交 ${Math.floor(s.formal/100000)} 格</span>${s.draft>0?`<b>草稿 ${pts(s.draft)} 没交</b>`:'<span>没有草稿</span>'}</div>
+    </div>
+    <div class="lower">
+      <div class="eff"><div class="eh"><span>产出效率</span><b class="tnum" style="color:${ec}">${tot}%</b></div>
+        <div class="ebar"><i style="width:${Math.min(100,tot)}%;background:${ec}"></i></div>
+        <ul>${E.rows.map(r=>`<li><span>${r.t}</span><em class="${r.neg?'neg':''}">${r.v}</em></li>`).join('')}</ul></div>
+      ${g?`<div class="tipnote ${g.k==='alert'?'alert':''}">${g.tut?'<i class="tut">新手指引</i>':''}<b>${g.b}</b><span>${g.d}</span></div>`:''}
+    </div>
+    <div class="thermo"><span class="k">压力</span><b class="tnum" style="color:${col}">${Math.round(s.fatigue)}</b><em style="color:${col}">${lvlWord(s.fatigue)}</em>
+      <div class="gl"><div class="tube"><i style="height:${Math.max(4,s.fatigue)}%;background:linear-gradient(0deg,${col},${col}cc)"></i></div><div class="bulb" style="background:${col}"></div></div></div>`);
+  put('dock',dockHTML(s,g));
+}
+function dockHTML(s,g){
+  if(s.phase==='running'){
+    const j=s.jobs[0];j.total=Math.max(j.total||0,j.left);
+    const p=100-j.left/j.total*100,cancellable=s.jobs.some(x=>!x.forced);
+    return `<div class="drow">
+      <button class="cb run" data-a="pause"><span class="fill" style="width:${p}%"></span><span>${ui.paused?'继续':game.actionName(j.kind)+'中'}</span><small>${j.title?esc(j.title)+' · ':''}剩${j.left}分钟 · ${ui.paused?'点一下继续':'点一下暂停'}</small></button>
+      <button class="cb off2 yellow" data-a="fast">${ic('fast')}<span>快进</span><small>遇事会停</small></button></div>
+      ${cancellable?`<button class="cb wide" data-a="cancel" style="height:54px">${ic('stop')}<span>停下</span><small>已用的时间不退</small></button>`:'<div class="lockline">这件事要做完才能停</div>'}`;
+  }
+  const c=controls(s),hot=k=>g&&g.k===k?'hot':'',off=why=>why?'off':'',hand=k=>g&&g.tut&&g.k===k?HAND:'';
+  const pv=game.preview(ui.dur),risky=s.draft+pv.gain>0&&pv.end+c.subMin>game.shutdownTime();
+  const ed=game.earliestDeparture();
+  const home=c.discard&&c.home!==''
+    ?`<button class="cb off2 danger" data-a="discardAsk">${ic('card')}<span>弃稿下班</span><small>草稿会丢</small></button>`
+    :`<button class="cb off2 coral ${hot('home')} ${off(c.home)}" data-a="home">${hand('home')}${ic('card')}<span>下班</span><small>${s.minute<ed?clock(ed)+'后走':s.draft>0?'先交再走':'现在走'}</small></button>`;
+  return `<div class="drow">
+      <button class="cb mint work ${hot('work')} ${off(c.work)}" data-a="work">${hand('work')}${ic('work')}<span>工作</span><small>${risky?'做完来不及交':'约草稿 +'+pts(pv.gain)}</small></button>
+      <button class="dur" data-a="cyc" aria-label="切换工作时长">${ui.dur}分 ⇄</button>
+      ${home}
+    </div>
+    <div class="trio">
+      <button class="cb ${hot('rest')} ${off(c.rest)}" data-a="rest">${hand('rest')}${ic('rest')}<span>休息</span><small>压力 −${game.restRecovery()}</small></button>
+      <button class="cb lilac ${off(c.evidence)}" data-a="evidence">${ic('rec')}<span>存记录</span><small>${s.evidence}/3 · ${game.evidenceMinutes()}分</small></button>
+      <button class="cb yellow ${hot('submit')} ${off(c.submit)}" data-a="submit">${hand('submit')}${ic('submit')}<span>提交</span><small>${c.waived?'用记录 ':''}${c.subMin}分钟</small></button>
+    </div>`;
+}
+
+/* ---------- 各阶段弹层 ---------- */
+function phaseSheet(){
+  const s=game.s;
+  if(s.phase==='morning')return morningHTML(s);
+  if(s.phase==='choice')return eventHTML(s);
+  if(s.phase==='summary')return summaryHTML(s);
+  return '';
+}
+function morningHTML(s){
+  const ch=Math.round((s.rate-1)*100),pos=ch>=0,ment=game.mentoring();
+  const teach=s.day<=2?`<div class="steps">
+      <div>${ic('work')}<b>先工作</b><span>做出草稿</span></div>
+      <div>${ic('submit')}<b>再提交</b><span>交了才算进度</span></div>
+      <div>${ic('rest')}<b>累了休息</b><span>压力降，效率回</span></div></div>`:'';
+  const items=s.traits.map(id=>{const d=game.leaderData(id);return `<div><img src="${pic(id)}" alt=""><span><b>${esc(d.name)}</b>${esc(d.summary)}</span></div>`}).join('')+
+    (game.overtimeBlocked()?`<div class="red">${ic('alert')}<span><b>18:00 强制下班</b>HR 已禁止加班，记得提前提交</span></div>`
+      :`<div>${ic('clock')}<span><b>19:00 起可以下班</b>没交的草稿，下班就会丢</span></div>`);
+  return `<div class="full" role="dialog" aria-label="晨间简报">
+    <div class="mhead"><div class="cal"><div class="ch">${L.WEEKDAYS[(s.day-1)%7]}</div><div class="cd">${s.day}</div><div class="ct">/ 30 天</div></div>
+      <div><h2>早上好</h2><div class="sub" style="margin-top:2px">项目 ${pti(s.formal)} / 2600 · 还剩 ${30-s.day} 天</div></div></div>
+    <div class="buff ${pos?'pos':'neg'}">${ic(pos?'up':'down')}<div><span>今天 · ${L.RATE_NAMES[s.rate_index]}</span>
+      <b>产出${pos?'+':'−'}${Math.abs(ch)}%</b><span>${ment?'忙碌压力+2/时 · 下班结束':'只管今天 · 仍可能遇到事件'}</span></div></div>
+    ${teach}
+    <div class="today">${items}</div>
+    <button class="cb mint wide" data-a="begin" style="margin-top:auto">${ic('work')}<span>开始今天</span></button>
+  </div>`;
+}
+function splitLabel(label){const i=label.indexOf(' · ');return i<0?[label,'']:[label.slice(0,i),label.slice(i+3)]}
+function eventHTML(s){
+  const e=s.event,speaker=e.speaker_id||(e.id.startsWith('leader_')?e.id:'');
+  let who;
+  if(speaker){const d=game.leaderData(speaker);
+    who=`<div class="polaroid"><img src="${pic(speaker)}" alt="${esc(d.name)}"></div><div><div class="name">${esc(d.name)}</div><div class="say">“${esc(e.speech||d.quote)}”</div></div>`;
+  }else{const [from,title]=e.title.includes(' · ')?e.title.split(' · '):['',e.title];
+    who=`<div class="polaroid"><div class="ava">${esc((from||'事')[0])}</div></div><div><div class="name">${esc(from)}</div><div class="say">${esc(title)}</div></div>`;}
+  const usesRec=e.options.some(o=>o.cost>0||o.gain);
+  const opts=e.options.map((o,i)=>{
+    const ok=game.optionEnabled(i),[main,sub]=splitLabel(o.label);
+    const why=ok?'':(s.evidence<o.cost?'记录不够':'记录已满');
+    return `<button class="check ${o.cost>0?'rec':''} ${o.loss>0||o.fatigue>0?'bad':''} ${ok?'':'off'}" data-a="choose" data-x="${i}">${esc(main)}<small>${esc(why||sub).replace('，','<br>')}</small></button>`;
+  }).join('');
+  const hr=e.id==='hr';
+  return `<div class="dim"></div><div class="memo ${hr?'hr':''}" role="dialog" aria-label="事件">
+    <div class="mh"><span>内部便函 · No.${String(s.day).padStart(2,'0')}${String(s.event_count).padStart(2,'0')}</span><span class="stamp">${hr?'人事':'急'}</span></div>
+    <div class="who">${who}</div><p>${esc(e.body)}</p>
+    <div class="opts">${opts}</div>
+    <div class="fine">选一项，时间才会继续${usesRec?` · 手上聊天记录 ${s.evidence}/3`:''}</div></div>`;
+}
+function summaryHTML(s){
+  const d=s.daily;
+  if(d.weekend)return `<div class="dim"></div><div class="receipt" role="dialog" aria-label="周末">
+    <h3>周末</h3><div class="sub">第${d.start_day}—${d.end_day}天 · 难得没人问你“在吗”</div>
+    <div class="ln"><span>压力恢复</span><b class="pos">−${Math.round(d.recovered)}</b></div>
+    <div class="ln"><span>现在压力</span><b>${Math.round(s.fatigue)}</b></div>
+    <button class="cb mint wide" data-a="next"><span>周一见 · 第${s.day+1}天</span></button></div>`;
+  return `<div class="dim"></div><div class="receipt" role="dialog" aria-label="下班">
+    <h3>下班小票</h3><div class="sub">第${s.day}天 · ${clock(d.departure||0)} 打卡</div>
+    <div class="ln"><span>今天提交</span><b class="pos">+${pts(d.formal_gain)}</b></div>
+    <div class="ln"><span>没交丢掉</span><b class="${d.lost>0?'neg':''}">${pts(d.lost)}</b></div>
+    <div class="ln"><span>项目累计</span><b>${pti(s.formal)} / 2600</b></div>
+    <div class="ln"><span>今天加班</span><b>${L.hours(d.overtime)}</b></div>
+    <div class="ln"><span>本月加班</span><b>${(s.month/60).toFixed(1)} / 45 小时</b></div>
+    <div class="ln"><span>睡醒后压力</span><b>${Math.round(s.fatigue)}</b></div>
+    ${d.hr_departure?'<div class="warn">HR 规定每天18:00下班，没交的草稿已丢</div>':d.forced_shutdown?'<div class="warn">24:00 服务器停机，只有交了的算数</div>':''}
+    <button class="cb mint wide" data-a="next"><span>${L.workday(s.day+1)?'明天见':'过周末'}</span></button></div>`;
+}
+function endingView(){
+  const s=game.s,won=s.formal>=L.TOTAL;
+  setScreen('end'+s.seed+s.ending,`<div class="full ending" style="position:relative;flex:1 1 auto">
+    <div class="cert"><span class="stamp">${won?'已交付':'逾期'}</span>
+      <h2 class="${won?'win':''}">${esc(s.ending)}</h2>
+      <p>${won?'领导还想再改一下，但你的项目已经交了。这个月，你赢了。':'日历翻完了，项目还差一点。换个安排，再和这群办公室奇人过过招。'}</p>
+      <div class="ln" style="display:flex;justify-content:space-between;border-top:1px dashed #2d343733;padding:6px 0"><span>已提交</span><b>${pti(s.formal)} / 2600</b></div>
+      <div class="ln" style="display:flex;justify-content:space-between;border-top:1px dashed #2d343733;padding:6px 0"><span>用时</span><b>${s.day} 天</b></div>
+      <div class="ln" style="display:flex;justify-content:space-between;border-top:1px dashed #2d343733;padding:6px 0"><span>本月加班</span><b>${(s.month/60).toFixed(1)} 小时</b></div>
+      <div class="ln" style="display:flex;justify-content:space-between;border-top:1px dashed #2d343733;padding:6px 0"><span>HR 约谈</span><b>${s.hr_count} 次</b></div>
+      <div style="font-size:11px;color:var(--mute);margin-top:6px">复盘编号 ${s.seed}</div></div>
+    <div class="list" style="margin-top:auto">
+      <button class="cb mint wide" data-a="new"><span>再来一个月 · 换三位领导</span></button>
+      <div class="trio" style="grid-template-columns:repeat(3,1fr)"><button class="cb wide" data-a="same"><span>重试</span></button><button class="cb wide" data-a="ledger"><span>记录</span></button><button class="cb wide" data-a="title"><span>标题</span></button></div>
+    </div></div>`);
+}
+
+/* ---------- 菜单类弹层 ---------- */
+function overlayHTML(){
+  const s=game.s;
+  switch(ui.overlay){
+    case 'menu':return `<div class="full" role="dialog" aria-label="菜单"><h2>菜单</h2>
+      <div class="sheet mrow"><span>提交时自动用 1 份聊天记录<small>关掉可以把记录留给领导事件</small></span>
+        <button class="tog" data-a="useEv" aria-pressed="${ui.useEv}">${ui.useEv?'开':'关'}</button></div>
+      <div class="list">
+        <button class="cb wide" data-a="traits"><span>本周三位领导</span></button>
+        <button class="cb wide" data-a="catalog"><span>全部 18 位领导</span></button>
+        <button class="cb wide" data-a="ledger"><span>工作记录</span></button>
+        <button class="cb wide" data-a="help"><span>怎么过关</span></button>
+        <button class="cb wide" data-a="title"><span>保存并回到标题</span></button>
+      </div>
+      <button class="cb mint wide" data-a="close" style="margin-top:auto"><span>回去干活</span></button></div>`;
+    case 'traits':return `<div class="full" role="dialog" aria-label="本周领导"><h2>第${s.leader_week}周 · 三位领导</h2>
+      <div class="sub">三张同时生效，每周一换人</div><div class="ids">${s.traits.map(idHTML).join('')}</div>
+      <button class="cb mint wide" data-a="close"><span>回去干活</span></button></div>`;
+    case 'catalog':return `<div class="full" role="dialog" aria-label="全部领导"><h2>全部 18 位领导</h2><div class="sub">每周随机三位同时生效</div>
+      <div class="catalog">${L.LEADERS.map(id=>{const d=game.leaderData(id);return `<div class="mini"><div class="pic"><img src="${pic(id)}" alt="" loading="lazy"></div><b>${esc(d.name)}</b><q>${esc(d.quote)}</q><span>${esc(d.summary)}</span></div>`}).join('')}</div>
+      <button class="cb mint wide" data-a="close"><span>返回</span></button></div>`;
+    case 'ledger':return `<div class="full" role="dialog" aria-label="工作记录"><h2>工作记录</h2><div class="sub">每天提交、加班和下班时间</div>
+      <div class="sheet"><table class="ledger"><tr><th>天</th><th>环境</th><th>提交</th><th>丢掉</th><th>加班</th><th>下班</th></tr>
+      ${(s.ledger||[]).map(d=>`<tr><td>${d.day}</td><td>${d.workday?'×'+d.rate:'休'}</td><td>+${pts(d.formal_gain)}</td><td>${d.lost?pts(d.lost):'—'}</td><td>${d.overtime?clock(d.overtime):'—'}</td><td>${d.departure?clock(d.departure):'—'}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--mute)">还没有下过班</td></tr>'}</table></div>
+      <button class="cb mint wide" data-a="close" style="margin-top:auto"><span>返回</span></button></div>`;
+    case 'help':return `<div class="full" role="dialog" aria-label="怎么过关"><h2>怎么过关</h2>
+      <div class="buff pos">${ic('done')}<div><b>30天内，交满2600点</b><span>交满立刻过关，不用等月底</span></div></div>
+      <div class="steps"><div>${ic('work')}<b>先工作</b><span>做出草稿</span></div><div>${ic('submit')}<b>再提交</b><span>交了才算进度</span></div><div>${ic('rest')}<b>累了休息</b><span>压力降，效率回</span></div></div>
+      <div class="today">
+        <div>${ic('card')}<span><b>下班前先提交</b>没交的草稿，下班就会丢</span></div>
+        <div>${ic('rec')}<span><b>聊天记录</b>领导刁难时拿出来，省时间、保草稿。最多3份</span></div>
+        <div>${ic('alert')}<span><b>本月加班别超45小时</b>超了 HR 约谈，之后每天18:00必须走</span></div>
+      </div>
+      <button class="cb mint wide" data-a="close" style="margin-top:auto"><span>知道了</span></button></div>`;
+    case 'discard':return `<div class="dim" data-a="close"></div><div class="memo" role="dialog" aria-label="弃稿下班">
+      <div class="mh"><span>确认</span><span class="stamp">丢</span></div>
+      <h3>不提交就下班？</h3><p>手上 ${pts(s.draft)} 点草稿会丢掉，已提交的不受影响。</p>
+      <div class="opts"><button class="check bad" data-a="discard">丢掉草稿，下班<small>${clock(s.minute+game.departureDelay())} 离开</small></button>
+      <button class="check" data-a="close">再想想<small>回去</small></button></div></div>`;
+  }
+  return '';
+}
+
+/* ---------------------------------------------------------------- 操作 */
+function startRun(seed){
+  game.newRun(seed);ui.seenNotes=game.s.history.length;ui.view='play';ui.intro=true;ui.overlay=null;ui.paused=true;persist();
+}
+function tryReq(kind,minutes,why){
+  if(why){toast(why);return}
+  if(game.request(kind,minutes,ui.useEv))ui.paused=false;
+}
+function act(a,x){
+  const s=game.s;
+  switch(a){
+    case 'new':startRun(1+Math.floor(Math.random()*999999998));break;
+    case 'same':startRun(s.seed);break;
+    case 'continue':{const d=load(SAVE_KEY,null);if(d&&game.load(d)){ui.view='play';ui.intro=false;ui.paused=true;ui.seenNotes=game.s.history.length}else toast('没有可继续的存档');break}
+    case 'help':ui.overlay='help';break;
+    case 'title':persist();ui.view='title';ui.overlay=null;break;
+    case 'accept':ui.intro=false;break;
+    case 'weekAck':game.acknowledgeWeek();break;
+    case 'begin':game.beginDay();ui.paused=false;break;
+    case 'next':game.nextDay();ui.paused=true;break;
+    case 'menu':ui.overlay='menu';ui.paused=true;break;
+    case 'traits':ui.overlay='traits';ui.paused=true;break;
+    case 'catalog':ui.overlay='catalog';break;
+    case 'ledger':ui.overlay='ledger';ui.paused=true;break;
+    case 'close':ui.overlay=null;break;
+    case 'useEv':ui.useEv=!ui.useEv;savePrefs();break;
+    case 'cyc':ui.dur=[15,30,60,120][([15,30,60,120].indexOf(ui.dur)+1)%4];savePrefs();break;
+    case 'work':{const c=controls(s);tryReq('work',ui.dur,c.work);break}
+    case 'rest':{const c=controls(s);tryReq('rest',30,c.rest);break}
+    case 'evidence':{const c=controls(s);tryReq('evidence',0,c.evidence);break}
+    case 'submit':{const c=controls(s);tryReq('submit',0,c.submit);break}
+    case 'home':{const c=controls(s);tryReq('finish_day',0,c.home);break}
+    case 'discardAsk':ui.overlay='discard';break;
+    case 'discard':ui.overlay=null;if(game.request('discard'))ui.paused=false;break;
+    case 'choose':{const i=+x;if(game.optionEnabled(i)){game.choose(i);ui.paused=false}else{const o=s.event.options[i];toast(s.evidence<o.cost?'聊天记录不够。':'记录已满，最多3份。')}break}
+    case 'pause':ui.paused=!ui.paused;break;
+    case 'fast':ui.fast=true;ui.paused=false;break;
+    case 'cancel':game.cancelPlan();break;
+  }
+  if(['work','rest','evidence','submit','home'].includes(a))tutAfter(a);
+  if(ui.view==='play')persist();
+  dirty=true;
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;act(b.dataset.a,b.dataset.x)});
+document.addEventListener('keydown',e=>{
+  if(ui.view!=='play'||e.repeat)return;
+  const s=game.s;
+  if(e.key==='Escape'){act(ui.overlay?'close':'menu');e.preventDefault();return}
+  if(ui.overlay)return;
+  if(e.code==='Space'){e.preventDefault();if(s.phase==='idle')act('work');else if(s.phase==='running')act('pause')}
+  else if(e.key==='p'||e.key==='P'){if(s.phase==='running')act('pause')}
+  else if(e.key==='q'||e.key==='Q')act('cyc');
+  else if(e.key>='1'&&e.key<='4'&&s.phase==='choice')act('choose',String(+e.key-1));
+});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){ui.paused=true;persist();dirty=true}});
+document.addEventListener('contextmenu',e=>e.preventDefault());
+game.onChange=()=>{dirty=true};
+
+/* ---------------------------------------------------------------- 主循环 */
+let dirty=true,last=performance.now(),artT=0,lastFrameKey='';
+function frame(now){
+  const dt=Math.min(.1,(now-last)/1000);last=now;artT+=dt;
+  const s=game.s;
+  if(ui.view==='play'&&!ui.overlay&&s.phase==='running'&&!ui.paused){
+    ui.elapsed+=dt*PLAYBACK;const iv=ui.fast?.04:.55;let n=0;
+    while(ui.elapsed>=iv&&game.s.phase==='running'&&n<24){ui.elapsed-=iv;n++;game.step()}
+    if(n){flushNotes();if(now-ui.lastSave>1500)persist()}
+  }else{ui.elapsed=0;ui.fast=false}
+  if(dirty){dirty=false;try{render()}catch(err){showError(err)}}
+  const cv=ui.view==='title'?$('heroCv'):$('cv');
+  if(cv){
+    let row=0,minute=1050;
+    if(ui.view==='play'&&s.day){minute=s.minute;
+      if(s.phase==='choice'||game.mentoring())row=3;
+      else if(s.phase==='running'&&s.jobs.length){const k=s.jobs[0].kind;row=k==='work'?1:k==='rest'?2:0}}
+    let f=Math.floor(artT*(row===1||row===3?8:4))%4;
+    if(ui.view==='play'&&(ui.paused||s.phase!=='running')&&row!==3)f=0;
+    const key=[cv.id,cv.clientWidth,cv.clientHeight,minute,row,f,office.ready].join();
+    if(key!==lastFrameKey){lastFrameKey=key;drawOffice(cv,minute,row,f)}
+  }
+  requestAnimationFrame(frame);
+}
+Object.values(office.imgs).forEach(im=>im.addEventListener('load',()=>{office.ready=(office.ready||0)+1}));
+window.addEventListener('resize',()=>{dirty=true;lastFrameKey=''});
+
+/* ---------------------------------------------------------------- 报错面板 */
+function showError(err){
+  const box=document.createElement('pre');
+  box.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99;background:#300;color:#fdd;font-size:11px;padding:8px;border-radius:8px;white-space:pre-wrap;max-height:40%;overflow:auto';
+  box.textContent='出错了，截图发给作者：\n'+(err&&err.stack||err);document.body.appendChild(box);
+}
+window.addEventListener('error',e=>showError(e.error||e.message));
+/*TEST_HOOK*/
+requestAnimationFrame(frame);
+window.__game=game;window.__ui=ui;window.__act=act;
+})();
+</script>
+</body>
+</html>
