@@ -56,7 +56,7 @@
   const hours = m => idiv(Math.abs(m), 60) + '小时' + String(Math.abs(m) % 60).padStart(2, '0') + '分';
   const endTime = (start, duration) => { let f = start + duration; if (start <= 720 && f > 720) f += 60; return f; };
   const pt = v => (v / 1000).toFixed(1);
-  const SICK_RESET = 30; // 压力满100病倒：当天回家、下一个工作日病假，压力回到这里
+  const SICK_RESET = 50; // 压力满100病倒：当天回家、下一个工作日病假，压力回到这里
 
   function drawLeaders(seed) {
     const r = new GodotRNG(seed), pool = LEADERS.slice(), out = [];
