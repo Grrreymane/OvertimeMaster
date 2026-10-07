@@ -12,8 +12,8 @@
 <meta property="og:url" content="https://grrreymane.github.io/OvertimeMaster/">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=928f790e") format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=928f790e") format("woff2");font-display:swap}
+@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=c349e761") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=c349e761") format("woff2");font-display:swap}
 /* 手写体：站酷快乐体子集（ZCOOL KuaiLe，OFL）。
    风格：工位桌面。墨绿桌垫上摆着台历、考勤机、牛皮纸文件夹、便利贴、便函、工牌；按钮是黏土块。
    字体：黑体管数字和规则；手写体只给“人说的话”（便利贴、领导原话）；时钟是画出来的七段数码管。 */
@@ -461,7 +461,20 @@ function tutAfter(a){
 }
 const HAND='<i class="hand" aria-hidden="true"><svg viewBox="0 0 34 38"><path d="M11 18V5.5a2.5 2.5 0 0 1 5 0V15h.4V13a2.5 2.5 0 0 1 5 0v2.4h.3v-1a2.4 2.4 0 0 1 4.8 0V17h.2v-.6a2.3 2.3 0 0 1 4.6 0V26c0 5-4 9-9 9h-2.6c-3 0-5.4-1.3-7-3.6L4.3 25.2a2.4 2.4 0 0 1 3.6-3.1L11 25z" fill="#fff" stroke="#2d3437" stroke-width="1.8" stroke-linejoin="round"/></svg></i>';
 function hasSave(){try{return !!localStorage.getItem(SAVE_KEY)}catch(e){return false}}
-function persist(){if(game.s&&game.s.day){store(SAVE_KEY,game.s);ui.lastSave=performance.now()}}
+function persist(){if(game.s&&game.s.day){store(SAVE_KEY,game.s);ui.lastSave=performance.now();reportProgress()}}
+/* AI Made Games 平台：在平台的站内播放器里运行时，上报一行进度摘要，显示为游戏页上的「你的存档」。在别处运行时什么也不做。 */
+var platformEmbed=window.parent!==window,platformTimer=0,platformLast='';
+function reportProgress(){
+  if(!platformEmbed||platformTimer)return;
+  platformTimer=setTimeout(()=>{
+    platformTimer=0;
+    const s=game.s;if(!s||!s.day)return;
+    const text=(s.ending?s.ending:`第 ${s.day} 天`)+` · 已交 ${pti(s.formal)}/2600 点`;
+    if(text===platformLast)return;
+    platformLast=text;
+    try{window.parent.postMessage({source:'aimadegames',v:1,type:'progress',text:text},'*')}catch(e){}
+  },1500);
+}
 
 /* ---------------------------------------------------------------- 提示 */
 function toast(msg,ms){
