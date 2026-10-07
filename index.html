@@ -12,8 +12,8 @@
 <meta property="og:url" content="https://grrreymane.github.io/OvertimeMaster/">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=db0cfd93") format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=db0cfd93") format("woff2");font-display:swap}
+@font-face{font-family:"Noto SC Game";src:url("fonts/noto-sc.woff2?v=4397ba52") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Hand Game";src:url("fonts/hand.woff2?v=4397ba52") format("woff2");font-display:swap}
 /* 手写体：站酷快乐体子集（ZCOOL KuaiLe，OFL）。
    风格：工位桌面。墨绿桌垫上摆着台历、考勤机、牛皮纸文件夹、便利贴、便函、工牌；按钮是黏土块。
    字体：黑体管数字和规则；手写体只给“人说的话”（便利贴、领导原话）；时钟是画出来的七段数码管。 */
@@ -381,7 +381,7 @@ table.ledger{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
 (function(){
 'use strict';
 const L=OvertimeLogic, RULES=window.OVERTIME_RULES, game=L.createGame(RULES);
-const SAVE_KEY='overtime.mobile.v1', PLAYBACK=4, VERSION='网页版 0.17.2';
+const SAVE_KEY='overtime.mobile.v1', PLAYBACK=4, VERSION='网页版 0.18';
 const $=id=>document.getElementById(id);
 const screen=$('screen'), layer=$('layer'), toastBox=$('toast');
 
@@ -443,7 +443,7 @@ const TUT=[
   {id:'submit',when:s=>s.draft>=60000&&!s.tutorial_submitted, b:'记得交一次', d:'没交的草稿会被领导返工扣掉，交了才稳。', k:'submit'},
   {id:'grid',  when:s=>s.tutorial_submitted, b:'涂满26格就赢', d:'文件夹里一格100点，30天内交满。', k:null},
   {id:'rec',   when:s=>s.evidence>0, b:'聊天记录很有用', d:'领导刁难时拿出来，省时间、保草稿。', k:null},
-  {id:'eff',   when:s=>s.fatigue>=40, b:'累了干得慢', d:'看左边的产出效率。休息能降压力。', k:'rest'},
+  {id:'eff',   when:s=>s.fatigue>=40, b:'累了干得慢', d:'看左边的产出效率。摸鱼能降压力。', k:'rest'},
   {id:'home',  when:s=>s.minute>=game.earliestDeparture()&&!s.sealed, b:'可以下班了', d:'点下班，会先帮你交草稿。', k:'home'},
 ];
 function tutTip(s){
@@ -537,6 +537,7 @@ function effInfo(s){
   if(s.extra_fatigue>0)rows.push({t:'忽略群聊 · 压力',v:'+2/时',neg:true});
   return{total:base*s.rate*game.productionMultiplier(ot),rows};
 }
+const slackTxt=()=>game.slackRisk()?`，被抓${Math.round(game.slackRisk()*100)}%`:'';
 function guide(s){
   if(s.phase==='choice')return null;
   if(s.sealed)return{b:'项目交完了！',d:'这个月，你赢了。',k:'done'};
@@ -546,15 +547,15 @@ function guide(s){
   // 按紧急程度：压力太高 → 深夜还有草稿没交 → 快到 HR 红线 → 平时的提交/休息建议（warn 让便签变红，并压过新手引导）
   const canRest=endTime(s.minute,30)<=shut;
   if(s.fatigue>=70&&canRest)return s.fatigue>=85
-    ?{b:'快撑不住了！',d:'满100会病倒，明天请病假。先休息。',k:'rest',warn:true}
-    :{b:'压力太高了',d:`效率只剩${Math.round(game.efficiency()*100)}%，休息30分钟−${game.restRecovery()}。`,k:'rest',warn:true};
+    ?{b:'快撑不住了！',d:'满100会病倒，明天请病假。先摸会儿鱼。',k:'rest',warn:true}
+    :{b:'压力太高了',d:`效率只剩${Math.round(game.efficiency()*100)}%，摸鱼30分钟−${game.restRecovery()}。`,k:'rest',warn:true};
   if(s.draft>0&&s.minute>=1200&&game.submissionBlock()==='')return{b:'加班别忘交',d:'越晚越危险：HR或停机会让没交的草稿白干。',k:'submit',warn:true};
   if(!game.overtimeBlocked()&&s.month>=2400&&s.minute>=1080)return{b:'快到HR红线',d:`本月加班${(s.month/60).toFixed(1)}/45小时，交了早点走。`,k:'home',warn:true};
   if(s.draft>0&&(game.projectRemaining()===0||s.draft>=60000||finish+30>=shut)){
     if(game.submissionBlock()!=='')return{b:'再做一点',d:'果树农民每次至少收30点。',k:'work'};
     return{b:'交一次草稿',d:'攒够了交，交了才算进度。',k:'submit'};
   }
-  if(s.fatigue>=40&&endTime(s.minute,30)<=shut)return{b:'歇一会儿吧',d:`休息30分钟，压力−${game.restRecovery()}。`,k:'rest'};
+  if(s.fatigue>=40&&endTime(s.minute,30)<=shut)return{b:'摸会儿鱼吧',d:`摸鱼30分钟，压力−${game.restRecovery()}${slackTxt()}。`,k:'rest'};
   if(s.minute>=shut-30)return{b:'准备下班',d:'时间不多了。',k:'clock'};
   if(!s.tutorial_worked)return{b:'先干活！',d:'点工作，做出第一份草稿。',k:'work'};
   if(s.minute>=game.earliestDeparture()&&s.draft===0)return{b:'可以下班了',d:'越晚走，明早恢复越少。',k:'home'};
@@ -568,12 +569,12 @@ function controls(s){
   const late=`${clock(shut)}强制下班，时间不够了。`;
   const c={};
   c.work=idle&&game.projectRemaining()>0&&!s.sealed?'':(busyWhy||(s.sealed?'项目已经交完了。':'草稿已经够了，提交就能过关。'));
-  c.rest=idle&&endTime(s.minute,30)<=shut?'':(busyWhy||'离强制下班不到30分钟，来不及休息。');
+  c.rest=idle&&endTime(s.minute,30)<=shut?'':(busyWhy||'离强制下班不到30分钟，来不及摸鱼。');
   c.evidence=idle&&s.evidence<3&&s.crafted<2&&endTime(s.minute,game.evidenceMinutes())<=shut?'':
     (busyWhy||(s.evidence>=3?'记录已满，最多3份。':s.crafted>=2?'今天已存2份，明天再存。':late));
   c.submit=idle&&validSubmit?'':(busyWhy||(s.draft<=0?'还没有草稿，先工作。':block||late));
   c.discard=s.draft>0&&s.minute>=game.earliestDeparture()&&(finish+game.departureDelay()>shut||block!=='');
-  c.home=idle&&(s.draft===0||validSubmit)&&finish+game.departureDelay()<=shut?'':(busyWhy||(c.discard?'':late));
+  c.home=idle&&(s.draft===0||validSubmit)&&finish+game.departureDelay()<=shut?'':(busyWhy||(c.discard?'草稿交不了，只能弃稿下班。':late));
   c.subMin=sub; c.waived=game.submissionWaiver(ui.useEv);
   return c;
 }
@@ -719,7 +720,7 @@ function dockHTML(s,g){
       ${home}
     </div>
     <div class="trio">
-      <button class="cb ${hot('rest')} ${off(c.rest)}" data-a="rest">${hand('rest')}${ic('rest')}<span>休息</span><small>压力 −${game.restRecovery()}</small></button>
+      <button class="cb ${hot('rest')} ${off(c.rest)}" data-a="rest">${hand('rest')}${ic('rest')}<span>摸鱼</span><small>−${game.restRecovery()} · ${game.slackRisk()?'被抓'+Math.round(game.slackRisk()*100)+'%':'安全'}</small></button>
       <button class="cb ${off(c.evidence)}" data-a="evidence">${ic('rec')}<span>存记录</span><small>${s.evidence}/3 · ${game.evidenceMinutes()}分</small></button>
       <button class="cb ${hot('submit')} ${off(c.submit)}" data-a="submit">${hand('submit')}${ic('submit')}<span>提交</span><small>${s.draft>0?'交'+pti(s.draft)+'点 · ':''}${c.waived?'记录 ':''}${c.subMin}分</small></button>
     </div>`;
@@ -738,7 +739,7 @@ function morningHTML(s){
   const teach=s.day<=2?`<div class="steps">
       <div>${ic('work')}<b>先工作</b><span>做出草稿</span></div>
       <div>${ic('submit')}<b>再提交</b><span>交了才算进度</span></div>
-      <div>${ic('rest')}<b>累了休息</b><span>压力降，效率回</span></div></div>`:'';
+      <div>${ic('rest')}<b>累了摸鱼</b><span>压力降，效率回</span></div></div>`:'';
   const items=s.traits.map(id=>{const d=game.leaderData(id);return `<div><img src="${pic(id)}" alt=""><span><b>${esc(d.name)}</b>${esc(d.summary)}</span></div>`}).join('')+
     (game.overtimeBlocked()?`<div class="red">${ic('alert')}<span><b>18:00 强制下班</b>HR 已禁止加班，记得提前提交</span></div>`
       :`<div>${ic('clock')}<span><b>19:00 起可以下班</b>没交的草稿，下班就会丢</span></div>`);
@@ -942,7 +943,7 @@ function overlayHTML(){
       <button class="cb mint wide" data-a="close" style="margin-top:auto"><span>返回</span></button></div>`;
     case 'help':return `<div class="full" role="dialog" aria-label="怎么过关"><h2>怎么过关</h2>
       <div class="buff pos">${ic('done')}<div><b>30天内，交满2600点</b><span>交满立刻过关，不用等月底</span></div></div>
-      <div class="steps"><div>${ic('work')}<b>先工作</b><span>做出草稿</span></div><div>${ic('submit')}<b>再提交</b><span>交了才算进度</span></div><div>${ic('rest')}<b>累了休息</b><span>压力降，效率回</span></div></div>
+      <div class="steps"><div>${ic('work')}<b>先工作</b><span>做出草稿</span></div><div>${ic('submit')}<b>再提交</b><span>交了才算进度</span></div><div>${ic('rest')}<b>累了摸鱼</b><span>压力降，效率回</span></div></div>
       <div class="today">
         <div>${ic('card')}<span><b>下班前先提交</b>没交的草稿，下班就会丢</span></div>
         <div>${ic('rec')}<span><b>聊天记录</b>领导刁难时拿出来，省时间、保草稿。最多3份</span></div>

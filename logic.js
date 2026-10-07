@@ -147,7 +147,7 @@
         week_submit_checked: false, week_stress_checked: false,
         urgent_active: false, urgent_done: false, urgent_goal: 10000, urgent_checked: false, office_called: false,
         event_count: 0, tutorial_worked: false, tutorial_submitted: false, overtime_ban: false, ban_start_day: 1,
-        calendar: {}, triggered_leaders: [], rest_minutes: 0, fatigue_peak: 12.0, record_uses: 0, rests_today: 0,
+        calendar: {}, triggered_leaders: [], rest_minutes: 0, fatigue_peak: 12.0, record_uses: 0, rests_today: 0, caught_count: 0,
         sick_next: false, sick_days: 0
       };
       G.s.calendar = makeCalendar(seed, G.s.weekly_traits);
@@ -174,6 +174,19 @@
       return useRecord && G.s.evidence > 0 && p.length ? p[0].id : '';
     };
     G.restRecovery = () => [balance.rest_recovery, balance.rest_repeat_recovery, balance.rest_floor_recovery][Math.min(2, G.s.rests_today)];
+    // 摸鱼被抓的概率（rules.json 的 slack_*）：每天第1次安全，第2次、之后各一档；瞄准镜、伏地魔在场各加一点
+    G.slackWatchers = () => ['leader_18', 'leader_08'].filter(G.hasTrait);
+    G.slackRisk = function () {
+      const n = G.s.rests_today;
+      if (n === 0) return 0;
+      return Math.min(0.8, (n === 1 ? balance.slack_risk_second : balance.slack_risk_later) + balance.slack_watcher_bonus * G.slackWatchers().length);
+    };
+    // 同一编号、同一天、同一次摸鱼，结果固定（复盘可重现）
+    function slackCaught() {
+      const s = S(), risk = G.slackRisk();
+      if (risk <= 0) return false;
+      return new GodotRNG(s.seed ^ (s.day * 0x3C1 + s.rests_today * 0x5F3759)).randf() < risk;
+    }
     G.submissionBlock = function (points) {
       const s = S();
       if (points === undefined || points < 0) points = s.draft;
@@ -442,12 +455,24 @@
           recordDay(); endRun('项目完成！');
         }
       } else if (j.kind === 'rest') {
-        s.fatigue = Math.max(0.0, s.fatigue - G.restRecovery());
-        s.rests_today += 1;
+        const rec = G.restRecovery();
+        // 断网时的休息（safe）不会被抓；快到强制下班也不抓，免得事件被下班清掉
+        if (!j.payload.safe && s.minute < G.shutdownTime() && slackCaught()) {
+          s.rests_today += 1; s.caught_count = (s.caught_count || 0) + 1;
+          const w = G.slackWatchers(), who = w.length ? w[0] : s.traits[0];
+          s.pending.unshift({ id: 'caught', speaker_id: who, speech: '上班时间，你在干什么？', title: G.leaderData(who).name + ' · 摸鱼被抓了',
+            body: '你刚把手机扣在桌上，一抬头，领导就站在身后。', forced: true,
+            options: [Object.assign(option('去办公室挨训 · ' + balance.slack_caught_minutes + '分钟，压力只降' + Math.round(rec / 2), 'busy', balance.slack_caught_minutes), { effect: 'slack_half', relief: rec / 2 }),
+              Object.assign(option('“我在等对方回复” · 不花时间，记录−1，压力照降' + rec, 'busy', 0, 1), { effect: 'slack_full', relief: rec })] });
+          note('摸鱼被' + G.leaderData(who).name + '抓到了。');
+        } else {
+          s.fatigue = Math.max(0.0, s.fatigue - rec);
+          s.rests_today += 1;
+        }
         if (G.hasTrait('leader_03') && !s.rest_cleanup) {
           s.rest_cleanup = true;
           s.jobs.unshift(job('busy', 30, {}, true, '整理公共区'));
-          note('物业管家安排打扫：休息后多用30分钟。');
+          note('物业管家安排打扫：摸鱼后多用30分钟。');
         }
       } else if (j.kind === 'hr') {
         s.overtime_ban = true; s.ban_start_day = s.day;
@@ -460,7 +485,7 @@
     }
 
     G.actionName = function (kind) {
-      return ({ work: '工作', submit: '提交', submit_auto: '提交', rest: '休息', evidence: '存记录', hr: '人事约谈', busy: '处理事务', wait: '等下班', wait_minimum: '等下班' })[kind] || kind;
+      return ({ work: '工作', submit: '提交', submit_auto: '提交', rest: '摸鱼', evidence: '存记录', hr: '人事约谈', busy: '处理事务', wait: '等下班', wait_minimum: '等下班' })[kind] || kind;
     };
 
     function option(label, kind, minutes, cost, loss, fatigue, gain) {
@@ -481,7 +506,7 @@
       }
       const fixed = {
         E00: ['同事 · 刚才的要求，记得存下来', '聊天记录就是保存下来的工作要求。以后有人改口、让你开会或返工时，可以出示它来省时间、保住草稿。现在先送你1份。',
-          [option('保存这份聊天记录 · 不花时间，记录+1', 'busy', 0, 0, 0, 0, true), option('我记住了，先休息一下 · 15分钟，压力−4', 'busy', 15, 0, 0, -4)]],
+          [option('保存这份聊天记录 · 不花时间，记录+1', 'busy', 0, 0, 0, 0, true), option('我记住了，先摸会儿鱼 · 15分钟，压力−4', 'busy', 15, 0, 0, -4)]],
         E01: ['大爹 · 打印键在哪？', '他把鼠标递给你，等你现场讲解这个“简单操作”。',
           [option('现场教他 · 60分钟，压力+8', 'busy', 60, 0, 0, 8), option('发保存的操作教程 · 15分钟，记录−1', 'busy', 15, 1)]],
         E02: ['大爹 · 我帮你归类了一下', '文件夹确实整齐了，文件却不知道放到哪了。',
@@ -493,7 +518,7 @@
         E05: ['同事 · 这里有个能用的旧模板', '这次真的有人帮忙。你确认了三遍，不是陷阱。',
           [option('整理模板 · 30分钟，记录+1', 'busy', 30, 0, 0, 0, true), option('先不用 · 不花时间', 'busy', 0)]],
         E06: ['网络 · 公司断网了', '大家终于有一个共同认可的无法工作理由。',
-          [option('趁机休息 · 30分钟，压力−' + G.restRecovery(), 'rest', 30), option('离线整理资料 · 30分钟，记录+1', 'busy', 30, 0, 0, 0, true)]]
+          [option('光明正大地摸鱼 · 30分钟，压力−' + G.restRecovery(), 'rest', 30), option('离线整理资料 · 30分钟，记录+1', 'busy', 30, 0, 0, 0, true)]]
       }[id];
       if (fixed) { e.title = fixed[0]; e.body = fixed[1]; e.options = fixed[2]; }
       return e;
@@ -558,9 +583,10 @@
       if (o.kind === 'extra') s.extra_fatigue = 2.0;
       if (o.effect === 'small_submit') s.small_submit = true;
       if (o.effect === 'waive_pressure') { s.pressure = false; s.pressure_waived = true; }
+      if (o.relief) s.fatigue = Math.max(0.0, s.fatigue - o.relief);
       note(e.title + ' → ' + o.label);
       s.event = {}; s.phase = 'idle';
-      if (o.minutes > 0) s.jobs.unshift(job(o.kind, o.minutes, { gain_evidence: o.gain }, true, e.title));
+      if (o.minutes > 0) s.jobs.unshift(job(o.kind, o.minutes, { gain_evidence: o.gain, safe: o.kind === 'rest' }, true, e.title));
       else if (o.gain) s.evidence = Math.min(3, s.evidence + 1);
       activate(); checkCollapse(); notify(); return true;
     };
