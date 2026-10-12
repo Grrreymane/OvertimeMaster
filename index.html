@@ -461,7 +461,65 @@ function tutAfter(a){
 }
 const HAND='<i class="hand" aria-hidden="true"><svg viewBox="0 0 34 38"><path d="M11 18V5.5a2.5 2.5 0 0 1 5 0V15h.4V13a2.5 2.5 0 0 1 5 0v2.4h.3v-1a2.4 2.4 0 0 1 4.8 0V17h.2v-.6a2.3 2.3 0 0 1 4.6 0V26c0 5-4 9-9 9h-2.6c-3 0-5.4-1.3-7-3.6L4.3 25.2a2.4 2.4 0 0 1 3.6-3.1L11 25z" fill="#fff" stroke="#2d3437" stroke-width="1.8" stroke-linejoin="round"/></svg></i>';
 function hasSave(){try{return !!localStorage.getItem(SAVE_KEY)}catch(e){return false}}
-function persist(){if(game.s&&game.s.day){store(SAVE_KEY,game.s);ui.lastSave=performance.now();reportProgress()}}
+function persist(){if(game.s&&game.s.day){store(SAVE_KEY,game.s);ui.lastSave=performance.now();reportProgress();cloudSave()}}
+
+/* ---------------------------------------------------------------- 1GP 云存档
+   平台脚本能加载：开局前 await initialize（读取 / 迁移 / 冲突都由平台处理，期间不能开始游戏）。
+   加载不上（国内网络、离线）：跳过云存档，照常用本地存档。不在平台里打开时，SDK 自己走本地访客存档。
+   存档内容 = 整局状态 game.s（含已排好的周表、日历、在途安排）+ 新手指引看过的条目 + 两个界面偏好。 */
+const CLOUD={origin:'https://1gp-game-platform.vercel.app',gameId:'a70a0a7e-0abb-4c3c-b257-28bb205ab741',schema:1};
+const cloud={ready:false,on:false,status:'',timer:0};
+function cloudExport(){
+  const run=game.s&&game.s.day?game.s:load(SAVE_KEY,null);
+  return JSON.parse(JSON.stringify({run:run&&run.day?run:null,tut:[...tutSeen],prefs:{dur:ui.dur,useEv:ui.useEv}}));
+}
+function cloudImport(data){
+  // 可能在游戏中途再次被调用（玩家在平台上选了云端存档）：整局替换，回到可继续的状态
+  const run=data&&data.run;
+  tutSeen.clear();((data&&data.tut)||[]).forEach(x=>tutSeen.add(x));saveTut();
+  if(data&&data.prefs){ui.dur=[15,30,60,120].includes(data.prefs.dur)?data.prefs.dur:30;ui.useEv=data.prefs.useEv!==false;savePrefs()}
+  ui.overlay=null;ui.share=null;ui.paused=true;ui.intro=false;screen._kind='';
+  if(run&&game.load(JSON.parse(JSON.stringify(run)))){store(SAVE_KEY,game.s);ui.seenNotes=game.s.history.length}
+  else{try{localStorage.removeItem(SAVE_KEY)}catch(e){}game.s={};ui.view='title'}
+  dirty=true;
+}
+function cloudSummary(data){
+  const r=data&&data.run;
+  if(!r||!r.day)return '还没开始';
+  return (r.ending?r.ending+' · ':`第${r.day}天 · `)+`已交 ${Math.floor(r.formal/1000)}/2600 点`;
+}
+function cloudSave(){
+  if(!cloud.on||cloud.timer)return;
+  cloud.timer=setTimeout(()=>{cloud.timer=0;window.AIMadeGames.saves.save().catch(e=>console.warn('云存档需要处理：',e&&e.code))},1500);
+}
+function loadSdk(){
+  return new Promise(res=>{
+    const sc=document.createElement('script');let done=false;
+    const fin=ok=>{if(done)return;done=true;res(ok)};
+    sc.src=CLOUD.origin+'/sdk/cloud-saves-v1.js';sc.async=true;
+    sc.onload=()=>fin(!!(window.AIMadeGames&&window.AIMadeGames.saves));sc.onerror=()=>fin(false);
+    setTimeout(()=>fin(false),8000);   // 国内网络连不上时最多等 8 秒
+    document.head.appendChild(sc);
+  });
+}
+async function cloudBoot(){
+  const ok=await loadSdk();
+  if(!ok){cloud.ready=true;cloud.status='';dirty=true;return}   // 平台脚本加载不上：只用本地存档
+  const S=window.AIMadeGames.saves;
+  S.onStatus(st=>{cloud.status=st.status||'';dirty=true});
+  try{
+    await S.initialize({platformOrigin:CLOUD.origin,gameId:CLOUD.gameId,schemaVersion:CLOUD.schema,gameVersion:VERSION.replace('网页版 ',''),
+      exportState:cloudExport,importState:cloudImport,summary:cloudSummary});
+    cloud.on=true;
+  }catch(e){
+    // 存档格式不兼容、身份变化等：不能自动开新局覆盖存档
+    cloud.status='blocked';cloud.err=(e&&e.message)||String(e);dirty=true;return;
+  }
+  cloud.ready=true;dirty=true;
+}
+const CLOUD_TEXT={loading:'正在读取云存档…',local:'进度存在本机',saving:'正在保存…',synced:'已同步到云端',offline:'离线中，进度先存在本机',
+  conflict:'云端和本机进度不一样，请在平台上选一个',error:'云存档出错，请看平台提示','signed-out':'未登录，进度存在本机',unsupported:'进度存在本机',
+  incompatible:'云端存档来自更新的版本，请刷新页面',blocked:'云存档暂时无法使用，为保护进度没有开始新游戏'};
 /* AI Made Games 平台：在平台的站内播放器里运行时，上报一行进度摘要，显示为游戏页上的「你的存档」。在别处运行时什么也不做。 */
 var platformEmbed=window.parent!==window,platformTimer=0,platformLast='';
 function reportProgress(){
@@ -631,7 +689,8 @@ function render(){
 function layerView(html){if(layer._h!==html){layer.innerHTML=html;layer._h=html}}
 
 function titleView(){
-  setScreen('title',`<div class="title">
+  const tk='title'+cloud.ready+cloud.status+hasSave();if(screen._kind!==tk)screen._kind='';
+  setScreen(tk,`<div class="title">
     <h1>今天也加班</h1><div class="en">OVERTIME MASTER</div>
     <div class="hero"><canvas id="heroCv"></canvas></div>
     <div class="tagline">领导催，同事坑，<br>项目还得你来扛。</div>
@@ -639,7 +698,7 @@ function titleView(){
     <div class="btns">
       <button class="cb mint wide" data-a="new">${ic('work')}<span>开始一个月</span></button>
       <div class="row2"><button class="cb wide ${hasSave()?'':'off'}" data-a="continue"><span>继续上次</span></button><button class="cb wide" data-a="help"><span>怎么玩</span></button></div>
-      <div class="ver">${VERSION} · 进度保存在这个浏览器</div>
+      <div class="ver">${VERSION} · ${cloud.ready?(CLOUD_TEXT[cloud.status]||'进度保存在这个浏览器'):(CLOUD_TEXT[cloud.status]||'正在准备存档…')}</div>
     </div></div>`);
 }
 
@@ -970,9 +1029,9 @@ function tryReq(kind,minutes,why){
 function act(a,x){
   const s=game.s;
   switch(a){
-    case 'new':startRun(1+Math.floor(Math.random()*999999998));break;
+    case 'new':if(!cloud.ready){toast(CLOUD_TEXT[cloud.status]||'正在准备存档…');break}startRun(1+Math.floor(Math.random()*999999998));break;
     case 'same':startRun(s.seed);break;
-    case 'continue':{const d=load(SAVE_KEY,null);if(d&&game.load(d)){ui.view='play';ui.intro=false;ui.paused=true;ui.seenNotes=game.s.history.length}else toast('没有可继续的存档');break}
+    case 'continue':{if(!cloud.ready){toast(CLOUD_TEXT[cloud.status]||'正在准备存档…');break}const d=load(SAVE_KEY,null);if(d&&game.load(d)){ui.view='play';ui.intro=false;ui.paused=true;ui.seenNotes=game.s.history.length}else toast('没有可继续的存档');break}
     case 'help':ui.overlay='help';break;
     case 'title':persist();ui.view='title';ui.overlay=null;break;
     case 'accept':ui.intro=false;break;
@@ -1070,6 +1129,7 @@ function showError(err){
   box.textContent='出错了，截图发给作者：\n'+(err&&err.stack||err);document.body.appendChild(box);
 }
 window.addEventListener('error',e=>showError(e.error||e.message));
+cloudBoot();
 /*TEST_HOOK*/
 requestAnimationFrame(frame);
 window.__game=game;window.__ui=ui;window.__act=act;
