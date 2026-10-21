@@ -44,8 +44,9 @@
   const TOTAL = 2600000;
   const LEADERS = []; for (let i = 1; i <= 18; i++) LEADERS.push('leader_' + String(i).padStart(2, '0'));
   const RATES = [0.25, 0.4, 0.8, 1.2, 1.7];
-  const RATE_NAMES = ['大爹贴身带教', '需求反复', '琐事分心', '推进顺畅', '灵感在线'];
-  const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  // 给玩家看的文字都是 i18n 键名（mobile/i18n/zh.json），规则层不出现文字本身
+  const RATE_NAMES = ['rate.0', 'rate.1', 'rate.2', 'rate.3', 'rate.4'];
+  const WEEKDAYS = ['wd.0', 'wd.1', 'wd.2', 'wd.3', 'wd.4', 'wd.5', 'wd.6'];
   const clone = v => JSON.parse(JSON.stringify(v));
   const roundi = x => Math.sign(x) * Math.round(Math.abs(x));
   const clampf = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -53,9 +54,11 @@
   const workday = day => (day - 1) % 7 < 5;
   const weekNumber = day => idiv(day - 1, 7) + 1;
   const clock = m => (m < 0 ? '−' : '') + idiv(Math.abs(m), 60) + ':' + String(Math.abs(m) % 60).padStart(2, '0');
-  const hours = m => idiv(Math.abs(m), 60) + '小时' + String(Math.abs(m) % 60).padStart(2, '0') + '分';
   const endTime = (start, duration) => { let f = start + duration; if (start <= 720 && f > 720) f += 60; return f; };
   const pt = v => (v / 1000).toFixed(1);
+  // 文字引用 {k: 键名, v: 参数}；参数里也可以再放引用，界面翻译时逐层展开
+  const K = (k, v) => v ? { k, v } : { k };
+  const LK = (id, f) => K('L.' + id + '.' + f);
   const SICK_RESET = 50; // 压力满100病倒：当天回家、下一个工作日病假，压力回到这里
 
   // 最烦的一档：qa/balance/leaders.js 推演里“在岗一周”对交付影响最大的 6 位（0.16）。
@@ -124,7 +127,6 @@
       if (!id) id = G.s.leader || 'leader_01';
       return rules.leaders.find(e => e.id === id) || rules.leaders[0];
     };
-    G.leaderName = () => (G.s.traits || []).map(id => G.leaderData(id).name).join(' / ');
     G.hasTrait = id => (G.s.traits || []).includes(id);
     G.overtimeBlocked = () => !!G.s.overtime_ban && G.s.day >= (G.s.ban_start_day || 1);
     G.earliestDeparture = () => G.overtimeBlocked() ? 1080 : 1140;
@@ -190,9 +192,9 @@
     G.submissionBlock = function (points) {
       const s = S();
       if (points === undefined || points < 0) points = s.draft;
-      if (points <= 0) return '还没有草稿。先点“工作”做出一些成果。';
+      if (points <= 0) return 'block.noDraft';
       if (G.hasTrait('leader_04') && points < 30000 && !s.small_submit && s.formal + points < TOTAL)
-        return '果树农民一次至少收30点草稿，现在只有' + pt(points) + '点。';
+        return 'block.min30'; // 参数 n = 现有草稿点数
       return '';
     };
     G.efficiency = function (month, fatigue) {
@@ -236,7 +238,14 @@
       return { end: t, gain: productive, overtime: m - s.month };
     };
 
-    function note(msg) { const s = S(); s.last_notice = msg; s.history.push({ day: s.day, time: s.minute, text: msg }); }
+    // 消息存键名和参数，界面显示时再翻译（旧存档里是中文 text 字段）
+    function note(key, vars) { const s = S(), m = K(key, vars); s.last_notice = m; s.history.push({ day: s.day, time: s.minute, msg: m }); }
+    // 事件标题的引用：有发言领导时前面加领导名
+    function eventTitle(e) {
+      const tt = K(e.title, e.titleVars);
+      return e.speaker_id ? K('fmt.pair', { a: LK(e.speaker_id, 'name'), b: tt }) : tt;
+    }
+    G.eventTitle = eventTitle;
     function notify() { if (G.onChange) G.onChange(); }
     G.note = note;
 
@@ -248,7 +257,7 @@
         s.traits = s.weekly_traits[String(week)].slice(); s.leader = s.traits[0];
         s.leader_week = week; s.week_changed = !s.sealed;
         s.week_submit_checked = false; s.week_stress_checked = false;
-        note('第' + week + '周领导已更换：' + G.leaderName() + '。三张同时生效。');
+        note('n.week', { week, a: LK(s.traits[0], 'name'), b: LK(s.traits[1], 'name'), c: LK(s.traits[2], 'name') });
       }
       s.crafted = 0; s.rests_today = 0; s.first_submit = false; s.focus = false; s.draft = 0;
       s.extra_fatigue = 0.0; s.phase = 'morning'; s.event = {}; s.event_done = false; s.daily_event = '';
@@ -267,12 +276,12 @@
       if (s.sick_next && !s.sealed) {
         s.sick_next = false; s.rate = 0.0;
         s.daily.rate = 0.0; s.daily.sick = true; s.daily.departure = 0;
-        s.phase = 'summary'; note('第' + s.day + '日：病假在家，一整天没上班。');
+        s.phase = 'summary'; note('n.sickDay', { day: s.day });
         recordDay();
-        if (s.day === 30) endRun('项目没赶上DDL');
+        if (s.day === 30) endRun('end.late');
         notify(); return;
       }
-      note('第' + s.day + '日：' + (s.sealed ? '项目已完成' : RATE_NAMES[s.rate_index] + ' · 产出×' + s.rate.toFixed(2)));
+      note(s.sealed ? 'n.daySealed' : 'n.day', { day: s.day, rate: K(RATE_NAMES[s.rate_index]), mult: s.rate.toFixed(2) });
       notify();
     }
 
@@ -286,9 +295,9 @@
       if (s.phase !== 'morning' || s.week_changed) return false;
       if (!workday(s.day)) { settleWeekend(); notify(); return true; }
       s.phase = 'idle';
-      if (G.hasTrait('leader_02') && !s.sealed) s.jobs.push(job('busy', 45, {}, true, '六点晨会'));
+      if (G.hasTrait('leader_02') && !s.sealed) s.jobs.push(job('busy', 45, {}, true, 'job.meeting'));
       if (s.sealed) {
-        s.jobs.push(job('wait', G.minutesUntil(G.earliestDeparture()), {}, false, '项目完成后等待下班'));
+        s.jobs.push(job('wait', G.minutesUntil(G.earliestDeparture()), {}, false, 'job.waitDone'));
         s.jobs.push(job('depart', 0));
       }
       activate(); notify(); return true;
@@ -303,7 +312,7 @@
         s.day += 1;
       }
       s.daily = { weekend: true, start_day: first, end_day: s.day, recovered: before - s.fatigue, formal_gain: 0, lost: 0, overtime: 0 };
-      s.phase = 'summary'; note('周末两天已合并休息，压力已恢复。'); notify();
+      s.phase = 'summary'; note('n.weekend'); notify();
     }
     function job(kind, minutes, payload, forced, title) {
       return { kind, left: minutes, payload: payload || {}, forced: !!forced, title: title || '', started: false };
@@ -352,7 +361,7 @@
           if (s.event.id === 'leader_08') s.fatigue = Math.min(100, s.fatigue + 18);
           if (s.event.id === 'leader_06' && !s.pressure_waived) s.pressure = true;
         }
-        note('有人找你：' + s.event.title + '。');
+        note('n.event', { title: eventTitle(s.event) });
         s.phase = 'choice';
         return;
       }
@@ -363,8 +372,8 @@
         if (j.kind === 'depart') {
           if (G.departureDelay() > 0 && s.minute < 1440) {
             s.departure_checked = true;
-            s.jobs.unshift(job('busy', 30, {}, true, '领导留步'));
-            note('古风小生叫住了你：多聊30分钟后才能走。');
+            s.jobs.unshift(job('busy', 30, {}, true, 'job.stay'));
+            note('n.stay');
             continue;
           }
           s.jobs.shift(); depart(); return;
@@ -375,18 +384,18 @@
         }
         if (j.kind === 'submit_auto') {
           if (s.draft > 0 && G.submissionBlock() !== '') {
-            note(G.submissionBlock()); s.jobs = []; s.phase = 'idle'; return;
+            note(G.submissionBlock(), { n: pt(s.draft) }); s.jobs = []; s.phase = 'idle'; return;
           }
           j.kind = 'submit';
           j.left = G.submitMinutes(!!j.payload.use_evidence);
           const waived = G.submissionWaiver(!!j.payload.use_evidence);
-          if (s.draft > 0 && waived !== '') { s.evidence -= 1; s.record_uses += 1; note('聊天记录抵消：' + G.leaderData(waived).name + '的一项提交惩罚。'); }
+          if (s.draft > 0 && waived !== '') { s.evidence -= 1; s.record_uses += 1; note('n.waived', { name: LK(waived, 'name') }); }
           if (s.draft <= 0) j.left = 0;
           else if (G.hasTrait('leader_07') && !s.first_loss_applied) {
             s.first_loss_applied = true;
             const loss = Math.min(s.draft, 28000);
             s.draft -= loss; s.daily.lost += loss;
-            note('文盲要求重写：损失' + pt(loss) + '点未交草稿。');
+            note('n.rewrite', { n: pt(loss) });
           }
           if (s.draft > 0 && G.hasTrait('leader_15') && !s.week_stress_checked) {
             s.week_stress_checked = true;
@@ -403,7 +412,7 @@
       const s = S();
       if (!['running', 'idle'].includes(s.phase)) return;
       s.jobs = s.jobs.filter(j => j.forced);
-      s.phase = 'idle'; note('已取消未完成安排；已用时间不退还。');
+      s.phase = 'idle'; note('n.cancel');
       activate(); checkCollapse(); notify();
     };
 
@@ -414,7 +423,7 @@
       if (s.minute >= G.shutdownTime()) { depart(true); notify(); return; }
       if (s.minute === 720) {
         s.minute = 780; s.fatigue = Math.max(0, s.fatigue - balance.lunch_recovery);
-        note('午休一小时，压力减少' + balance.lunch_recovery + '点。'); checkInterrupts(); notify(); return;
+        note('n.lunch', { n: balance.lunch_recovery }); checkInterrupts(); notify(); return;
       }
       const j = s.jobs[0], overtime = s.minute >= 1080;
       if (j.kind === 'work') {
@@ -446,13 +455,13 @@
       if (j.kind === 'submit') {
         const submitted = s.draft;
         s.week_submit_checked = true;
-        if (s.urgent_active && s.minute <= 1080 && submitted >= s.urgent_goal) { s.urgent_done = true; note('急件已交：赶在18:00前完成了。'); }
+        if (s.urgent_active && s.minute <= 1080 && submitted >= s.urgent_goal) { s.urgent_done = true; note('n.urgentDone'); }
         s.formal += submitted; s.draft = 0; s.first_submit = true; s.small_submit = false;
         if (submitted > 0) s.tutorial_submitted = true;
-        note('已提交 ' + pt(submitted) + ' 点，项目进度已保存。');
+        note('n.submitted', { n: pt(submitted) });
         if (s.formal >= TOTAL) {
           s.sealed = true; s.daily.completed_project = true; s.daily.completed_at = s.minute;
-          recordDay(); endRun('项目完成！');
+          recordDay(); endRun('end.won');
         }
       } else if (j.kind === 'rest') {
         const rec = G.restRecovery();
@@ -460,32 +469,32 @@
         if (!j.payload.safe && s.minute < G.shutdownTime() && slackCaught()) {
           s.rests_today += 1; s.caught_count = (s.caught_count || 0) + 1;
           const w = G.slackWatchers(), who = w.length ? w[0] : s.traits[0];
-          s.pending.unshift({ id: 'caught', speaker_id: who, speech: '上班时间，你在干什么？', title: G.leaderData(who).name + ' · 摸鱼被抓了',
-            body: '你刚把手机扣在桌上，一抬头，领导就站在身后。', forced: true,
-            options: [Object.assign(option('去办公室挨训 · ' + balance.slack_caught_minutes + '分钟，压力只降' + Math.round(rec / 2), 'busy', balance.slack_caught_minutes), { effect: 'slack_half', relief: rec / 2 }),
-              Object.assign(option('“我在等对方回复” · 不花时间，记录−1，压力照降' + rec, 'busy', 0, 1), { effect: 'slack_full', relief: rec })] });
-          note('摸鱼被' + G.leaderData(who).name + '抓到了。');
+          s.pending.unshift({ id: 'caught', speaker_id: who, speech: 'ev.caught.speech', title: 'ev.caught.title',
+            body: 'ev.caught.body', forced: true,
+            options: [Object.assign(option(K('ev.caught.o0', { min: balance.slack_caught_minutes, n: Math.round(rec / 2) }), 'busy', balance.slack_caught_minutes), { effect: 'slack_half', relief: rec / 2 }),
+              Object.assign(option(K('ev.caught.o1', { n: rec }), 'busy', 0, 1), { effect: 'slack_full', relief: rec })] });
+          note('n.caught', { name: LK(who, 'name') });
         } else {
           s.fatigue = Math.max(0.0, s.fatigue - rec);
           s.rests_today += 1;
         }
         if (G.hasTrait('leader_03') && !s.rest_cleanup) {
           s.rest_cleanup = true;
-          s.jobs.unshift(job('busy', 30, {}, true, '整理公共区'));
-          note('物业管家安排打扫：摸鱼后多用30分钟。');
+          s.jobs.unshift(job('busy', 30, {}, true, 'job.cleanup'));
+          note('n.cleanup');
         }
       } else if (j.kind === 'hr') {
         s.overtime_ban = true; s.ban_start_day = s.day;
-        note('人事约谈完成：本月禁止加班，每天18:00强制下班。');
+        note('n.hrDone');
       } else if (j.kind === 'evidence') {
         s.evidence = Math.min(3, s.evidence + 1); s.crafted += 1;
       }
       if (j.payload && j.payload.gain_evidence) s.evidence = Math.min(3, s.evidence + 1);
-      if (j.kind !== 'submit') note('完成：' + G.actionName(j.kind));
+      if (j.kind !== 'submit') note('n.done', { act: K(G.actionName(j.kind)) });
     }
 
     G.actionName = function (kind) {
-      return ({ work: '工作', submit: '提交', submit_auto: '提交', rest: '摸鱼', evidence: '存记录', hr: '人事约谈', busy: '处理事务', wait: '等下班', wait_minimum: '等下班' })[kind] || kind;
+      return 'act.' + ({ submit_auto: 'submit', wait_minimum: 'wait', review: 'busy', extra: 'busy' }[kind] || kind);
     };
 
     function option(label, kind, minutes, cost, loss, fatigue, gain) {
@@ -495,30 +504,30 @@
       const e = { id, title: '', body: '', options: [], forced: false };
       if (id.startsWith('leader_')) {
         const d = G.leaderData(id);
-        e.title = d.name + ' · ' + d.event.title; e.body = d.event.body;
-        e.speaker_id = id; e.speech = d.event.speech || d.quote;
-        for (const o of d.event.options) { const x = option(o.label, o.kind, +o.minutes, +o.cost, +o.loss, +o.fatigue); x.effect = o.effect; e.options.push(x); }
+        e.title = 'R.' + id + '.title'; e.body = 'R.' + id + '.body';
+        e.speaker_id = id; e.speech = d.event.speech ? 'R.' + id + '.speech' : 'L.' + id + '.quote';
+        d.event.options.forEach((o, i) => { const x = option('R.' + id + '.o' + i, o.kind, +o.minutes, +o.cost, +o.loss, +o.fatigue); x.effect = o.effect; e.options.push(x); });
         return e;
       }
       for (const entry of rules.ordinary_events_v03) if (entry.id === id) {
-        e.title = entry.title; e.body = entry.body;
-        for (const o of entry.options) { const x = option(o.label, o.kind, +o.minutes, +o.cost, +o.loss, +o.fatigue, o.gain); x.effect = o.effect; e.options.push(x); }
+        e.title = 'R.' + id + '.title'; e.body = 'R.' + id + '.body';
+        entry.options.forEach((o, i) => { const x = option('R.' + id + '.o' + i, o.kind, +o.minutes, +o.cost, +o.loss, +o.fatigue, o.gain); x.effect = o.effect; e.options.push(x); });
       }
       const fixed = {
-        E00: ['同事 · 刚才的要求，记得存下来', '聊天记录就是保存下来的工作要求。以后有人改口、让你开会或返工时，可以出示它来省时间、保住草稿。现在先送你1份。',
-          [option('保存这份聊天记录 · 不花时间，记录+1', 'busy', 0, 0, 0, 0, true), option('我记住了，先摸会儿鱼 · 15分钟，压力−4', 'busy', 15, 0, 0, -4)]],
-        E01: ['大爹 · 打印键在哪？', '他把鼠标递给你，等你现场讲解这个“简单操作”。',
-          [option('现场教他 · 60分钟，压力+8', 'busy', 60, 0, 0, 8), option('发保存的操作教程 · 15分钟，记录−1', 'busy', 15, 1)]],
-        E02: ['大爹 · 我帮你归类了一下', '文件夹确实整齐了，文件却不知道放到哪了。',
-          [option('找回文件 · 75分钟', 'busy', 75), option('不找了 · 最多丢36点草稿', 'busy', 0, 0, 36000), option('恢复副本 · 15分钟，记录−1', 'busy', 15, 1)]],
-        E03: ['大爹 · 工作流按我的习惯来', '他没有用过这个工具，但觉得大家的流程需要统一。',
-          [option('参加流程会议 · 90分钟', 'busy', 90), option('拿出签字记录 · 15分钟，记录−1', 'busy', 15, 1), option('照着改 · 15分钟，最多丢40点草稿', 'busy', 15, 0, 40000)]],
-        E04: ['群聊 · 你这里怎么还没完成？', '几分钟前才发过的进度，已经被上面的聊天刷走。',
-          [option('重写一份说明 · 15分钟', 'busy', 15), option('引用聊天记录 · 不花时间，记录−1', 'busy', 0, 1), option('先忽略 · 今日忙碌额外压力+2/时', 'extra', 0)]],
-        E05: ['同事 · 这里有个能用的旧模板', '这次真的有人帮忙。你确认了三遍，不是陷阱。',
-          [option('整理模板 · 30分钟，记录+1', 'busy', 30, 0, 0, 0, true), option('先不用 · 不花时间', 'busy', 0)]],
-        E06: ['网络 · 公司断网了', '大家终于有一个共同认可的无法工作理由。',
-          [option('光明正大地摸鱼 · 30分钟，压力−' + G.restRecovery(), 'rest', 30), option('离线整理资料 · 30分钟，记录+1', 'busy', 30, 0, 0, 0, true)]]
+        E00: ['ev.E00.title', 'ev.E00.body',
+          [option('ev.E00.o0', 'busy', 0, 0, 0, 0, true), option('ev.E00.o1', 'busy', 15, 0, 0, -4)]],
+        E01: ['ev.E01.title', 'ev.E01.body',
+          [option('ev.E01.o0', 'busy', 60, 0, 0, 8), option('ev.E01.o1', 'busy', 15, 1)]],
+        E02: ['ev.E02.title', 'ev.E02.body',
+          [option('ev.E02.o0', 'busy', 75), option('ev.E02.o1', 'busy', 0, 0, 36000), option('ev.E02.o2', 'busy', 15, 1)]],
+        E03: ['ev.E03.title', 'ev.E03.body',
+          [option('ev.E03.o0', 'busy', 90), option('ev.E03.o1', 'busy', 15, 1), option('ev.E03.o2', 'busy', 15, 0, 40000)]],
+        E04: ['ev.E04.title', 'ev.E04.body',
+          [option('ev.E04.o0', 'busy', 15), option('ev.E04.o1', 'busy', 0, 1), option('ev.E04.o2', 'extra', 0)]],
+        E05: ['ev.E05.title', 'ev.E05.body',
+          [option('ev.E05.o0', 'busy', 30, 0, 0, 0, true), option('ev.E05.o1', 'busy', 0)]],
+        E06: ['ev.E06.title', 'ev.E06.body',
+          [option(K('ev.E06.o0', { n: G.restRecovery() }), 'rest', 30), option('ev.E06.o1', 'busy', 30, 0, 0, 0, true)]]
       }[id];
       if (fixed) { e.title = fixed[0]; e.body = fixed[1]; e.options = fixed[2]; }
       return e;
@@ -529,9 +538,8 @@
       const s = S();
       if (s.month <= 2700 || s.hr_month || s.overtime_ban) return;
       s.hr_month = true; s.hr_count += 1; s.fatigue = Math.min(100, s.fatigue + 12);
-      s.pending.unshift({ id: 'hr', title: '人事 · 约谈后禁止加班',
-        body: '本月加班已超过45小时。约谈完成后，本月每天18:00强制下班；今天已过18:00，会立即离开。手里未提交的草稿会丢失。',
-        forced: true, options: [option('接受约谈 · 45分钟，然后强制下班', 'hr', 45), option('提交完整记录 · 15分钟，记录−2，然后强制下班', 'hr', 15, 2)] });
+      s.pending.unshift({ id: 'hr', title: 'ev.hr.title', body: 'ev.hr.body',
+        forced: true, options: [option('ev.hr.o0', 'hr', 45), option('ev.hr.o1', 'hr', 15, 2)] });
     }
     function checkInterrupts() {
       const s = S();
@@ -548,19 +556,19 @@
       if (G.hasTrait('leader_05')) {
         if (s.minute >= 960 && !s.urgent_active) {
           s.urgent_active = true; s.urgent_goal = Math.min(20000, TOTAL - s.formal);
-          s.pending.push({ id: 'urgent', speaker_id: 'leader_05', speech: '18:00前交给我', title: '顺丰快递 · 18:00前交给我',
-            body: '现在16:00。18:00前提交至少' + pt(s.urgent_goal) + '点，就算完成急件；没赶上压力+22。',
-            forced: false, options: [option('知道了 · 不花时间', 'busy', 0)] });
+          s.pending.push({ id: 'urgent', speaker_id: 'leader_05', speech: 'ev.urgent.speech', title: 'ev.urgent.speech',
+            body: 'ev.urgent.body', bodyVars: { n: pt(s.urgent_goal) },
+            forced: false, options: [option('ev.urgent.o0', 'busy', 0)] });
         }
         if (s.minute >= 1080 && s.urgent_active && !s.urgent_checked) {
           s.urgent_checked = true;
-          if (!s.urgent_done) { s.fatigue = Math.min(100, s.fatigue + 22); note('急件没赶上18:00：压力增加22点。'); }
+          if (!s.urgent_done) { s.fatigue = Math.min(100, s.fatigue + 22); note('n.urgentMiss'); }
         }
       }
       if (G.hasTrait('leader_13') && s.minute >= 900 && !s.office_called) {
         s.office_called = true;
-        s.pending.push({ id: 'office', speaker_id: 'leader_13', speech: '来我办公室一下', title: '灵魂召唤师 · 来办公室一下',
-          body: '刚坐下，办公室的召唤又来了。这次说明要45分钟。', forced: true, options: [option('进行说明 · 45分钟', 'busy', 45)] });
+        s.pending.push({ id: 'office', speaker_id: 'leader_13', speech: 'ev.office.speech', title: 'ev.office.title',
+          body: 'ev.office.body', forced: true, options: [option('ev.office.o0', 'busy', 45)] });
       }
     }
 
@@ -584,9 +592,9 @@
       if (o.effect === 'small_submit') s.small_submit = true;
       if (o.effect === 'waive_pressure') { s.pressure = false; s.pressure_waived = true; }
       if (o.relief) s.fatigue = Math.max(0.0, s.fatigue - o.relief);
-      note(e.title + ' → ' + o.label);
+      note('n.choice', { title: eventTitle(e), opt: o.label });
       s.event = {}; s.phase = 'idle';
-      if (o.minutes > 0) s.jobs.unshift(job(o.kind, o.minutes, { gain_evidence: o.gain, safe: o.kind === 'rest' }, true, e.title));
+      if (o.minutes > 0) s.jobs.unshift(job(o.kind, o.minutes, { gain_evidence: o.gain, safe: o.kind === 'rest' }, true, eventTitle(e)));
       else if (o.gain) s.evidence = Math.min(3, s.evidence + 1);
       activate(); checkCollapse(); notify(); return true;
     };
@@ -604,9 +612,9 @@
       s.fatigue = SICK_RESET; s.sick_next = true; s.sick_days = (s.sick_days || 0) + 1;
       s.daily.departure = s.minute; s.daily.collapsed = true; s.daily.sleep = 0;
       s.phase = 'summary';
-      note('压力满了，你病倒了：今天提前回家，下一个工作日请病假。');
+      note('n.collapse');
       recordDay();
-      if (s.day === 30) endRun('项目没赶上DDL');
+      if (s.day === 30) endRun('end.late');
       return true;
     }
 
@@ -614,7 +622,7 @@
       const s = S();
       if (['summary', 'ending'].includes(s.phase)) return;
       if (s.minute < G.earliestDeparture()) {
-        s.phase = 'idle'; s.jobs = []; note(clock(G.earliestDeparture()) + '前还不能下班。'); return;
+        s.phase = 'idle'; s.jobs = []; note('n.notYet', { time: clock(G.earliestDeparture()) }); return;
       }
       s.jobs = s.jobs.filter(j => ['hr', 'review'].includes(j.kind) && j.left > 0);
       s.pending = s.pending.filter(e => e.id === 'hr');
@@ -627,9 +635,9 @@
       s.daily.departure = s.minute; s.daily.forced_shutdown = !!forced; s.daily.hr_departure = !!forced && G.overtimeBlocked();
       s.daily.sleep = sleep;
       s.phase = 'summary';
-      note(forced ? (G.overtimeBlocked() ? '人事规定禁止加班，强制下班。' : '24:00服务器停机，强制下班。') : '已打卡下班。');
+      note(forced ? (G.overtimeBlocked() ? 'n.hrOut' : 'n.shutdown') : 'n.out');
       recordDay();
-      if (s.day === 30) endRun(s.formal >= TOTAL ? '项目完成！' : '项目没赶上DDL');
+      if (s.day === 30) endRun(s.formal >= TOTAL ? 'end.won' : 'end.late');
     }
     function recordDay() {
       const s = S();
@@ -646,7 +654,7 @@
     function endRun(ending) {
       const s = S();
       s.ending = ending; s.phase = 'ending'; s.jobs = []; s.pending = []; s.event = {};
-      note('月度结局：' + ending);
+      note('n.ending', { end: K(ending) });
     }
 
     G.validate = function () {
@@ -669,5 +677,5 @@
     return G;
   }
 
-  return { GodotRNG, HARD_LEADERS, createGame, drawLeaders, makeWeeklyTraits, makeCalendar, TOTAL, LEADERS, RATES, RATE_NAMES, WEEKDAYS, workday, weekNumber, clock, hours, endTime };
+  return { GodotRNG, HARD_LEADERS, createGame, drawLeaders, makeWeeklyTraits, makeCalendar, TOTAL, LEADERS, RATES, RATE_NAMES, WEEKDAYS, workday, weekNumber, clock, endTime, K };
 });
